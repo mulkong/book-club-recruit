@@ -759,7 +759,7 @@ section{ padding:clamp(52px, 8vw, 96px) 0; }
       <div class="kpi reveal" id="kpi"></div>
       <div class="kpi-foot reveal">
         <span class="badge">🍽️ <span data-cfg="support"></span> 지원</span>
-        <span>1인당 지원 금액은 <strong data-cfg="mealSupport"></strong> — 공통 가이드가 별도 안내됩니다.</span>
+        <span>모임 식사와 음료, 함께 읽는 도서를 클럽 회비에서 지원합니다.</span>
       </div>
     </div>
   </section>
@@ -819,8 +819,7 @@ section{ padding:clamp(52px, 8vw, 96px) 0; }
         <div class="how-card">
           <div class="how-icon" aria-hidden="true">🍽️</div>
           <h3 data-cfg="support"></h3>
-          <p>모임 식사와 음료, 그리고 함께 읽는 도서를 <strong>클럽 회비에서 지원</strong>합니다.
-             1인당 지원 금액 가이드는 별도 공지됩니다.</p>
+          <p>모임 식사와 음료, 그리고 함께 읽는 도서를 <strong>클럽 회비에서 지원</strong>합니다.</p>
         </div>
       </div>
     </div>
@@ -1057,7 +1056,6 @@ const SUPPORT = "식사 + 음료 + 도서";
 const CONFIG = {
   recruitPeriod: TBD,
   support:       SUPPORT,      // 히어로·배지·운영안내에 표시됩니다
-  mealSupport:   TBD,          // 1인당 식사·음료 지원 금액
   venue:         "사내 미팅룸 (조율 중)",
 
   /* 문의처 담당자. 비워두면 안내 문구가 "운영진에게 문의해주세요" 로만 나갑니다.
@@ -1214,7 +1212,6 @@ const PENDING = [
   "도서 주기 — 한 달 1권 유지 여부",
   "모임 장소 — 사내 미팅룸 / 식사 장소",
   "모임 주기 — 클럽별 격주 기준 조정",
-  "비용 지원 금액 — 1인당 가이드 금액",
 ];
 
 const FAQS = [
@@ -1228,7 +1225,7 @@ const FAQS = [
   },
   {
     q: "책값도 지원되나요?",
-    a: "네. 모임 식사와 음료, 그리고 함께 읽는 도서까지 클럽 회비에서 지원합니다. 1인당 지원 금액 가이드는 " + TBD + "예요.",
+    a: "네. 모임 식사와 음료, 그리고 함께 읽는 도서까지 클럽 회비에서 지원합니다.",
   },
   {
     q: "모임 요일이 제 일정과 안 맞으면요?",
