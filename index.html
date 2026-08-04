@@ -743,7 +743,7 @@ section{ padding:clamp(52px, 8vw, 96px) 0; }
         </div>
         <div>
           <dt>참가비</dt>
-          <dd>무료 · 식사+음료 지원</dd>
+          <dd>무료 · <span data-cfg="support"></span> 지원</dd>
         </div>
       </dl>
     </div>
@@ -758,7 +758,7 @@ section{ padding:clamp(52px, 8vw, 96px) 0; }
       </div>
       <div class="kpi reveal" id="kpi"></div>
       <div class="kpi-foot reveal">
-        <span class="badge">🍽️ 식사 + 음료 지원</span>
+        <span class="badge">🍽️ <span data-cfg="support"></span> 지원</span>
         <span>1인당 지원 금액은 <strong data-cfg="mealSupport"></strong> — 공통 가이드가 별도 안내됩니다.</span>
       </div>
     </div>
@@ -818,8 +818,9 @@ section{ padding:clamp(52px, 8vw, 96px) 0; }
         </div>
         <div class="how-card">
           <div class="how-icon" aria-hidden="true">🍽️</div>
-          <h3>식사 + 음료 지원</h3>
-          <p>모임 식사와 음료를 회사에서 지원합니다. 1인당 지원 금액 가이드는 별도 공지됩니다.</p>
+          <h3 data-cfg="support"></h3>
+          <p>모임 식사와 음료, 그리고 함께 읽는 도서를 <strong>클럽 회비에서 지원</strong>합니다.
+             1인당 지원 금액 가이드는 별도 공지됩니다.</p>
         </div>
       </div>
     </div>
@@ -1050,8 +1051,12 @@ section{ padding:clamp(52px, 8vw, 96px) 0; }
 /** 아직 확정되지 않은 값은 모두 이 상수를 씁니다. */
 const TBD = "추후 공지";
 
+/** 클럽 공통 지원 항목. 여기만 고치면 카드·운영안내·히어로·FAQ 에 모두 반영됩니다. */
+const SUPPORT = "식사 + 음료 + 도서";
+
 const CONFIG = {
   recruitPeriod: TBD,
+  support:       SUPPORT,      // 히어로·배지·운영안내에 표시됩니다
   mealSupport:   TBD,          // 1인당 식사·음료 지원 금액
   venue:         "사내 미팅룸 (조율 중)",
 
@@ -1150,23 +1155,23 @@ const CLUBS = [
     days:     ["수"],
     daysLabel:"수요일",
     place:    "사내 미팅룸 (조율 중)",
-    support:  "음료 + 식사",
+    support:  SUPPORT,
     capacity: 10,
   },
   {
     teller:   "정지혜",
     photo:    PHOTOS["정지혜"],
     tagline:  "바빠도 1권은 제대로 읽자",
-    theme:    "바쁜 사람들을 위해 한 권이라도 잘 읽는 데 집중합니다. 연금과 자산배분처럼 미뤄두기 쉬운, 그러나 빠를수록 좋은 주제를 다룹니다.",
+    theme:    "바쁜 사람들을 위해 한 권이라도 잘 읽는 데 집중합니다. 연금과 자산배분처럼 미뤄두기 쉬운, 그러나 빨리 실천할수록 좋은 주제를 다루려고 합니다.",
     keywords: ["연금", "자산배분", "완독"],
     book:     "박곰희의 연금부자수업",
     bookCycle:"1달 1권",
     meetCycle:"격주",
-    when:     "점심",
-    days:     ["화","수","목"],
-    daysLabel:"화·수·목 중 (일정 변동)",
+    when:     "첫 모임 후 결정",
+    days:     [],                       // 비우면 '요일 미정' → 어떤 요일 필터에서도 보입니다
+    daysLabel:"요일·시간 함께 정할 예정",
     place:    TBD,
-    support:  TBD,
+    support:  SUPPORT,
     capacity: 10,
   },
   {
@@ -1182,7 +1187,7 @@ const CLUBS = [
     days:     ["화","수","목"],
     daysLabel:"화·수·목 중 (일정 변동)",
     place:    TBD,
-    support:  TBD,
+    support:  SUPPORT,
     capacity: 10,
   },
   {
@@ -1198,7 +1203,7 @@ const CLUBS = [
     days:     ["월","수","금"],
     daysLabel:"월·수·금 중 (일정 변동)",
     place:    TBD,
-    support:  TBD,
+    support:  SUPPORT,
     capacity: 10,
   },
 ];
@@ -1223,7 +1228,7 @@ const FAQS = [
   },
   {
     q: "책값도 지원되나요?",
-    a: "확정된 지원 범위는 모임의 식사와 음료입니다. 도서 구입비 지원 여부는 " + TBD + "예요.",
+    a: "네. 모임 식사와 음료, 그리고 함께 읽는 도서까지 클럽 회비에서 지원합니다. 1인당 지원 금액 가이드는 " + TBD + "예요.",
   },
   {
     q: "모임 요일이 제 일정과 안 맞으면요?",
@@ -1370,17 +1375,22 @@ chips.forEach((chip) => {
     const day = chip.dataset.day;
     chips.forEach((c) => c.setAttribute("aria-pressed", String(c === chip)));
 
-    let shown = 0;
+    let shown = 0, undecided = 0;
     cards.forEach((card) => {
-      const hit = day === "all" || card.dataset.days.split(",").includes(day);
+      const days = card.dataset.days.split(",").filter(Boolean);
+      // 요일이 아직 안 정해진 클럽(days 비어 있음)은 어떤 요일을 골라도 보여준다.
+      // 나중에 그 요일로 정해질 수 있으므로 숨기면 기회를 잃습니다.
+      const open = days.length === 0;
+      const hit  = day === "all" || open || days.includes(day);
       card.hidden = !hit;
-      if (hit) shown++;
+      if (hit) { shown++; if (open && day !== "all") undecided++; }
     });
 
     empty.hidden = shown > 0;
     liveMsg.textContent = day === "all"
       ? `전체 ${shown}개 클럽을 표시합니다.`
-      : `${day}요일에 열리는 클럽 ${shown}개를 표시합니다.`;
+      : `${day}요일에 열리는 클럽 ${shown}개를 표시합니다.` +
+        (undecided ? ` (요일 미정 ${undecided}개 포함)` : "");
   });
 });
 
