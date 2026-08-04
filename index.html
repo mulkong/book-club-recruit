@@ -51,6 +51,12 @@
 
 *,*::before,*::after{ box-sizing:border-box; }
 
+/* hidden 속성은 항상 이긴다.
+   브라우저 기본값은 [hidden]{display:none} 이지만, 작성자가 선언한 display
+   (예: #applyForm{display:flex})가 그걸 덮어써서 hidden 이 무력화된다.
+   JS 에서 el.hidden = true 로 감추는 요소가 여러 개 있으므로 여기서 못박는다. */
+[hidden]{ display:none !important; }
+
 html{
   -webkit-text-size-adjust:100%;
   scroll-behavior:smooth;
@@ -1525,6 +1531,7 @@ function showDone(p) {
     ["모임",      club ? `${club.when} · ${club.daysLabel}` : "-"],
     p.club2 ? ["2순위", `${p.club2} 텔러`] : null,
   ].filter(Boolean).map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join("");
+  dlgAlert.classList.remove("show");   // 직전 시도의 오류 배너가 남아있지 않게
   form.hidden = true;
   dlgDone.classList.add("show");
   $(".dlg-body").scrollTop = 0;
