@@ -1,0 +1,9 @@
+# 이 레포는 공개 산출물만 담습니다.
+# 내부 원본(사진 포함 index.html, build_public.py, 프로필 사진)은
+# ~/Desktop/naver-bookclub/ 에 두고 여기로 가져오지 않습니다.
+*.png
+*.jpg
+*.jpeg
+*.xlsx
+build_public.py
+.DS_Store

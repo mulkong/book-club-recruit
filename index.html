@@ -1,0 +1,1601 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>독서 스터디 4기 모집</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="description" content="투자와 경제를 함께 읽는 4개의 사내 독서 클럽. 4기 멤버를 모집합니다.">
+<style>
+/* ============================================================
+   독서 스터디 4기 모집 페이지
+   - 외부 의존 없음(폰트/이미지/스크립트 전부 인라인)
+   - 편집이 필요한 내용은 파일 하단 스크립트의 CONFIG / CLUBS / FAQS 상수에 모여 있습니다.
+   ============================================================ */
+
+:root{
+  /* Primary green */
+  --green:        #03C75A;   /* 시그니처 그린: 큰 면적 채움(버튼/배지 배경) */
+  --green-hover:  #02B350;
+  --green-deep:   #019A44;   /* 큰 숫자·아이콘용(흰 배경 대비 3.7:1) */
+  --green-text:   #00863A;   /* 작은 그린 텍스트/링크용(흰 배경 대비 4.7:1) */
+  --green-050:    #EAFBF1;
+  --green-100:    #D6F5E3;
+
+  /* Ink */
+  --ink:          #000000;
+  --ink-strong:   #1A1A1A;
+  --ink-body:     #333333;
+  --ink-muted:    #767676;   /* 흰 배경 대비 4.5:1 */
+
+  /* Surface */
+  --bg:           #FFFFFF;
+  --bg-soft:      #F7F8FA;
+  --bg-sunken:    #F1F3F5;
+  --line:         #E5E8EB;
+  --line-strong:  #D1D6DB;
+
+  /* Status */
+  --warn-bg:      #FFF6E5;
+  --warn-line:    #FFE0A3;
+  --warn-ink:     #8A5A00;
+
+  --radius:       16px;
+  --radius-sm:    10px;
+  --radius-pill:  999px;
+  --shadow-1:     0 1px 2px rgba(0,0,0,.04), 0 4px 16px rgba(0,0,0,.04);
+  --shadow-2:     0 4px 12px rgba(0,0,0,.06), 0 16px 40px rgba(0,0,0,.07);
+  --maxw:         1080px;
+  --header-h:     60px;
+}
+
+*,*::before,*::after{ box-sizing:border-box; }
+
+html{
+  -webkit-text-size-adjust:100%;
+  scroll-behavior:smooth;
+  scroll-padding-top:calc(var(--header-h) + 16px);
+}
+@media (prefers-reduced-motion:reduce){
+  html{ scroll-behavior:auto; }
+  *{ animation-duration:.001ms !important; transition-duration:.001ms !important; }
+}
+
+body{
+  margin:0;
+  font-family:-apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo",
+              "Pretendard", "Malgun Gothic", "맑은 고딕", "Noto Sans KR", sans-serif;
+  color:var(--ink-body);
+  background:var(--bg);
+  line-height:1.62;
+  letter-spacing:-.01em;
+  overflow-x:hidden;
+  word-break:keep-all;      /* 한국어 단어 단위 줄바꿈 */
+}
+
+h1,h2,h3,h4{ margin:0; color:var(--ink-strong); line-height:1.34; letter-spacing:-.028em; font-weight:800; }
+p{ margin:0; }
+ul,ol{ margin:0; padding:0; list-style:none; }
+a{ color:var(--green-text); text-decoration:none; }
+a:hover{ text-decoration:underline; }
+button{ font:inherit; color:inherit; cursor:pointer; }
+
+:focus-visible{
+  outline:3px solid var(--green-deep);
+  outline-offset:2px;
+  border-radius:4px;
+}
+
+.wrap{ width:100%; max-width:var(--maxw); margin:0 auto; padding:0 20px; }
+.sr{
+  position:absolute; width:1px; height:1px; padding:0; margin:-1px;
+  overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0;
+}
+
+/* ── Skip link ─────────────────────────────────────────── */
+.skip{
+  position:absolute; left:16px; top:-64px; z-index:100;
+  background:var(--ink); color:#fff; padding:10px 16px;
+  border-radius:var(--radius-sm); font-weight:700; font-size:14px;
+  transition:top .18s ease;
+}
+.skip:focus{ top:12px; text-decoration:none; }
+
+/* ── Header ────────────────────────────────────────────── */
+.hdr{
+  position:sticky; top:0; z-index:50;
+  height:var(--header-h);
+  background:rgba(255,255,255,.88);
+  backdrop-filter:saturate(180%) blur(12px);
+  -webkit-backdrop-filter:saturate(180%) blur(12px);
+  border-bottom:1px solid var(--line);
+}
+.hdr-in{
+  height:100%; display:flex; align-items:center; gap:20px;
+}
+.brand{
+  display:flex; align-items:center; gap:9px;
+  font-weight:800; font-size:16px; color:var(--ink);
+  letter-spacing:-.03em; flex:0 0 auto;
+}
+.brand:hover{ text-decoration:none; }
+.brand-mark{
+  width:26px; height:26px; border-radius:7px;
+  background:var(--green); color:#fff;
+  display:grid; place-items:center;
+  font-weight:900; font-size:15px; line-height:1;
+  letter-spacing:0; flex:0 0 auto;
+}
+.brand-sub{ color:var(--ink-muted); font-weight:600; }
+
+.nav{ display:none; margin-left:auto; gap:4px; }
+@media (min-width:880px){ .nav{ display:flex; } }
+.nav a{
+  padding:8px 13px; border-radius:var(--radius-pill);
+  font-size:14.5px; font-weight:600; color:var(--ink-muted);
+  transition:background .15s ease, color .15s ease;
+}
+.nav a:hover{ color:var(--ink-strong); background:var(--bg-sunken); text-decoration:none; }
+.nav a[aria-current="true"]{ color:var(--green-text); background:var(--green-050); }
+
+.hdr .btn-sm{ margin-left:auto; }
+@media (min-width:880px){ .hdr .btn-sm{ margin-left:12px; } }
+
+/* ── Buttons ───────────────────────────────────────────── */
+.btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:8px;
+  border:1px solid transparent; border-radius:var(--radius-pill);
+  font-weight:700; letter-spacing:-.02em; text-align:center;
+  transition:transform .12s ease, background .15s ease, box-shadow .15s ease, border-color .15s ease;
+}
+.btn:hover{ text-decoration:none; }
+.btn:active{ transform:translateY(1px); }
+
+.btn-primary{
+  background:var(--green); color:#fff;
+  padding:15px 30px; font-size:17px;
+  box-shadow:0 6px 18px rgba(3,199,90,.28);
+}
+.btn-primary:hover{ background:var(--green-hover); box-shadow:0 8px 22px rgba(3,199,90,.34); }
+
+.btn-ghost{
+  background:#fff; color:var(--ink-strong);
+  border-color:var(--line-strong);
+  padding:15px 26px; font-size:17px;
+}
+.btn-ghost:hover{ background:var(--bg-soft); border-color:var(--ink-muted); }
+
+.btn-sm{
+  background:var(--green); color:#fff;
+  padding:9px 17px; font-size:14.5px; border-radius:var(--radius-pill);
+  font-weight:700; display:inline-flex; align-items:center; gap:6px;
+}
+.btn-sm:hover{ background:var(--green-hover); text-decoration:none; }
+
+/* ── Section shell ─────────────────────────────────────── */
+section{ padding:clamp(52px, 8vw, 96px) 0; }
+.sec-soft{ background:var(--bg-soft); }
+.sec-head{ margin-bottom:clamp(28px, 4vw, 44px); }
+.eyebrow{
+  display:inline-block; margin-bottom:12px;
+  font-size:13px; font-weight:800; letter-spacing:.06em;
+  color:var(--green-text); text-transform:uppercase;
+}
+.sec-title{ font-size:clamp(24px, 4.2vw, 34px); }
+.sec-desc{ margin-top:12px; font-size:clamp(15px,2.2vw,17px); color:var(--ink-muted); max-width:60ch; }
+
+.badge{
+  display:inline-flex; align-items:center; gap:6px;
+  padding:5px 11px; border-radius:var(--radius-pill);
+  font-size:12.5px; font-weight:700; letter-spacing:-.01em;
+  background:var(--green-050); color:var(--green-text);
+  border:1px solid var(--green-100);
+}
+.badge-neutral{ background:var(--bg-sunken); color:var(--ink-muted); border-color:var(--line); }
+.badge-tbd{ background:var(--warn-bg); color:var(--warn-ink); border-color:var(--warn-line); }
+
+/* ── Hero ──────────────────────────────────────────────── */
+.hero{
+  position:relative; overflow:hidden;
+  padding:clamp(56px, 9vw, 108px) 0 clamp(48px, 7vw, 84px);
+  background:
+    radial-gradient(1000px 460px at 88% -12%, rgba(3,199,90,.13), transparent 62%),
+    radial-gradient(700px 380px at 4% 6%, rgba(3,199,90,.07), transparent 60%),
+    var(--bg);
+}
+.hero-in{ position:relative; z-index:1; max-width:760px; }
+.hero-badges{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:22px; }
+.hero h1{
+  font-size:clamp(31px, 6.6vw, 58px);
+  line-height:1.24; letter-spacing:-.04em; font-weight:800;
+}
+.hero h1 em{ font-style:normal; color:var(--green-deep); }
+.hero-lead{
+  margin-top:20px; font-size:clamp(16px, 2.6vw, 19px);
+  color:var(--ink-body); max-width:56ch; line-height:1.72;
+}
+.hero-cta{ display:flex; flex-wrap:wrap; gap:10px; margin-top:32px; }
+.hero-meta{
+  display:flex; flex-wrap:wrap; gap:10px 28px;
+  margin-top:30px; padding-top:24px; border-top:1px solid var(--line);
+}
+.hero-meta div{ font-size:14.5px; }
+.hero-meta dt{ color:var(--ink-muted); font-weight:600; margin-bottom:2px; }
+.hero-meta dd{ margin:0; color:var(--ink-strong); font-weight:700; }
+
+/* ── KPI row (stat tiles) ──────────────────────────────── */
+.kpi{
+  display:grid; gap:12px;
+  grid-template-columns:repeat(2, minmax(0,1fr));
+}
+@media (min-width:760px){ .kpi{ grid-template-columns:repeat(4, minmax(0,1fr)); } }
+.tile{
+  background:#fff; border:1px solid var(--line);
+  border-radius:var(--radius); padding:22px 20px;
+  box-shadow:var(--shadow-1);
+}
+.tile-label{
+  font-size:13.5px; font-weight:600; color:var(--ink-muted);
+  margin-bottom:8px;
+}
+.tile-value{
+  display:flex; align-items:baseline; gap:5px;
+  font-size:clamp(30px, 5.4vw, 40px); font-weight:800;
+  color:var(--green-deep); letter-spacing:-.045em; line-height:1.05;
+}
+.tile-value .unit{
+  font-size:15px; font-weight:700; color:var(--ink-body); letter-spacing:-.02em;
+}
+.tile-note{ margin-top:8px; font-size:13px; color:var(--ink-muted); }
+.kpi-foot{
+  margin-top:16px; display:flex; flex-wrap:wrap; gap:8px; align-items:center;
+  font-size:13.5px; color:var(--ink-muted);
+}
+
+/* ── Filter chips ──────────────────────────────────────── */
+.filters{
+  display:flex; flex-wrap:wrap; gap:8px; align-items:center;
+  margin-bottom:22px;
+}
+.filters-label{ font-size:13.5px; font-weight:700; color:var(--ink-muted); margin-right:4px; }
+.chip{
+  background:#fff; border:1px solid var(--line-strong);
+  border-radius:var(--radius-pill); padding:8px 15px;
+  font-size:14px; font-weight:600; color:var(--ink-body);
+  transition:all .14s ease; min-height:38px;
+}
+.chip:hover{ border-color:var(--ink-muted); background:var(--bg-soft); }
+.chip[aria-pressed="true"]{
+  background:var(--ink); border-color:var(--ink); color:#fff;
+}
+
+/* ── Club cards ────────────────────────────────────────── */
+.clubs{
+  display:grid; gap:16px;
+  grid-template-columns:1fr;
+}
+@media (min-width:820px){ .clubs{ grid-template-columns:repeat(2, minmax(0,1fr)); } }
+
+.club{
+  background:#fff; border:1px solid var(--line);
+  border-radius:var(--radius); overflow:hidden;
+  box-shadow:var(--shadow-1);
+  transition:box-shadow .2s ease, border-color .2s ease, transform .2s ease;
+  display:flex; flex-direction:column;
+}
+.club:hover{ box-shadow:var(--shadow-2); border-color:var(--line-strong); transform:translateY(-2px); }
+.club[hidden]{ display:none; }
+
+.club-top{ height:5px; background:linear-gradient(90deg, var(--green), #5FDE95); }
+
+.club-body{ padding:24px 22px 20px; }
+.club-no{
+  font-size:12px; font-weight:800; letter-spacing:.08em;
+  color:var(--ink-muted); margin-bottom:10px;
+}
+.club-teller{ display:flex; align-items:center; gap:12px; margin-bottom:14px; }
+.club-avatar{
+  width:54px; height:54px; border-radius:50%; overflow:hidden; position:relative;
+  background:var(--green-050);
+  color:var(--green-text); font-weight:800; font-size:19px;
+  display:grid; place-items:center; flex:0 0 auto;
+  box-shadow:0 0 0 1px var(--line-strong), 0 0 0 4px #fff, 0 0 0 5px var(--green-100);
+}
+.club-avatar img{
+  width:100%; height:100%; object-fit:cover; display:block;
+  /* 인물 사진은 얼굴이 위쪽에 오므로 상단 기준으로 정렬 */
+  object-position:50% 22%;
+}
+.club-teller-name{ font-size:17px; font-weight:800; color:var(--ink-strong); line-height:1.3; }
+.club-teller-role{ font-size:12.5px; color:var(--ink-muted); font-weight:600; }
+
+.club-tagline{
+  font-size:clamp(18px,2.6vw,21px); font-weight:800;
+  color:var(--ink-strong); letter-spacing:-.035em; line-height:1.42;
+  margin-bottom:10px;
+}
+.club-keywords{ display:flex; flex-wrap:wrap; gap:6px; margin-bottom:18px; }
+.kw{
+  font-size:12.5px; font-weight:600; color:var(--ink-muted);
+  background:var(--bg-sunken); border-radius:var(--radius-pill);
+  padding:4px 10px;
+}
+
+.club-book{
+  display:flex; gap:13px; align-items:center;
+  padding:14px; border-radius:var(--radius-sm);
+  background:var(--bg-soft); border:1px solid var(--line);
+}
+.book-spine{
+  width:34px; height:46px; border-radius:2px 5px 5px 2px; flex:0 0 auto;
+  background:
+    linear-gradient(90deg, rgba(0,0,0,.28) 0 5px, rgba(255,255,255,.34) 5px 6px, transparent 6px),
+    linear-gradient(135deg, var(--green-deep), var(--green));
+  box-shadow:0 2px 6px rgba(0,0,0,.16);
+}
+.club-book-label{ font-size:12px; font-weight:700; color:var(--ink-muted); margin-bottom:3px; }
+.club-book-title{ font-size:15px; font-weight:700; color:var(--ink-strong); line-height:1.4; }
+
+.club-facts{
+  display:grid; grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px; margin-top:18px;
+}
+.fact dt{ font-size:12px; font-weight:700; color:var(--ink-muted); margin-bottom:3px; }
+.fact dd{ margin:0; font-size:14px; font-weight:700; color:var(--ink-strong); line-height:1.45; }
+.fact dd small{ display:block; font-size:12.5px; font-weight:600; color:var(--ink-muted); margin-top:2px; }
+
+/* 카드 하단 액션 행: [이 클럽 신청하기] + [자세히] */
+.club-actions{
+  margin-top:auto; display:flex; gap:8px; align-items:stretch;
+  padding:14px 22px 18px; border-top:1px solid var(--line); background:#fff;
+}
+.club-apply{
+  flex:1 1 auto; min-height:46px;
+  background:var(--green); color:#fff; border:0;
+  border-radius:var(--radius-pill); font-size:15px; font-weight:700;
+  letter-spacing:-.02em;
+  display:inline-flex; align-items:center; justify-content:center; gap:7px;
+  box-shadow:0 4px 12px rgba(3,199,90,.24);
+  transition:background .15s ease, box-shadow .15s ease, transform .12s ease;
+}
+.club-apply:hover{ background:var(--green-hover); box-shadow:0 6px 16px rgba(3,199,90,.3); }
+.club-apply:active{ transform:translateY(1px); }
+
+.club-toggle{
+  flex:0 0 auto; min-height:46px; padding:0 16px;
+  background:#fff; border:1px solid var(--line-strong);
+  border-radius:var(--radius-pill);
+  font-size:14px; font-weight:700; color:var(--ink-body);
+  display:inline-flex; align-items:center; justify-content:center; gap:6px;
+  transition:background .15s ease, border-color .15s ease;
+}
+.club-toggle:hover{ background:var(--bg-soft); border-color:var(--ink-muted); }
+.club-toggle .caret{ transition:transform .22s ease; font-size:10px; color:var(--ink-muted); }
+.club-toggle[aria-expanded="true"] .caret{ transform:rotate(180deg); }
+
+.club-detail{
+  display:none;
+  padding:20px 22px 24px; border-top:1px solid var(--line);
+  background:var(--bg-soft);
+}
+.club-detail.open{ display:block; animation:slidein .24s ease; }
+@keyframes slidein{ from{ opacity:0; transform:translateY(-6px); } to{ opacity:1; transform:none; } }
+.club-detail h4{ font-size:13px; color:var(--ink-muted); font-weight:700; margin-bottom:7px; }
+.club-detail p{ font-size:14.5px; color:var(--ink-body); line-height:1.7; }
+.detail-rows{ margin-top:18px; border-top:1px solid var(--line); }
+.detail-rows > div{
+  display:flex; gap:14px; padding:11px 0; border-bottom:1px solid var(--line);
+  font-size:14px;
+}
+.detail-rows dt{ flex:0 0 88px; color:var(--ink-muted); font-weight:600; }
+.detail-rows dd{ margin:0; color:var(--ink-strong); font-weight:600; }
+
+.clubs-empty{
+  padding:56px 20px; text-align:center; color:var(--ink-muted);
+  background:#fff; border:1px dashed var(--line-strong); border-radius:var(--radius);
+  font-size:15px;
+}
+
+/* ── 신청 모달 (native <dialog>) ───────────────────────── */
+#applyDialog{
+  padding:0; border:0; background:transparent;
+  width:min(560px, 100%); max-width:100%;
+  max-height:100dvh;
+}
+#applyDialog::backdrop{ background:rgba(0,0,0,.5); backdrop-filter:blur(3px); }
+.dlg{
+  background:#fff; border-radius:20px; overflow:hidden;
+  max-height:min(88dvh, 860px); display:flex; flex-direction:column;
+  box-shadow:0 24px 60px rgba(0,0,0,.24);
+}
+/* 모바일: 바닥에 붙는 시트 형태 */
+@media (max-width:600px){
+  #applyDialog{ width:100%; margin:auto auto 0; }
+  .dlg{ border-radius:20px 20px 0 0; max-height:92dvh; }
+}
+
+.dlg-head{
+  padding:22px 24px 18px; border-bottom:1px solid var(--line);
+  display:flex; align-items:flex-start; gap:14px; flex:0 0 auto;
+}
+.dlg-head h2{ font-size:20px; letter-spacing:-.035em; }
+.dlg-head p{ margin-top:5px; font-size:13.5px; color:var(--ink-muted); }
+.dlg-close{
+  margin-left:auto; flex:0 0 auto;
+  width:34px; height:34px; border-radius:50%;
+  background:var(--bg-sunken); border:0; color:var(--ink-body);
+  font-size:17px; line-height:1;
+  display:grid; place-items:center;
+  transition:background .15s ease;
+}
+.dlg-close:hover{ background:var(--line); }
+
+/* form 도 세로 flex 로 만들어야 본문만 스크롤되고 하단 버튼이 고정된다 */
+#applyForm{
+  display:flex; flex-direction:column;
+  flex:1 1 auto; min-height:0; overflow:hidden;
+}
+.dlg-body{
+  padding:22px 24px 8px;
+  flex:1 1 auto; min-height:0; overflow-y:auto;
+  -webkit-overflow-scrolling:touch; overscroll-behavior:contain;
+}
+.dlg-foot{
+  padding:16px 24px 22px; border-top:1px solid var(--line);
+  background:var(--bg-soft); flex:0 0 auto;
+}
+.dlg-foot .btn-primary{ width:100%; padding:15px 20px; }
+.dlg-foot .btn-primary[disabled]{ opacity:.55; cursor:not-allowed; box-shadow:none; }
+.dlg-foot-note{ margin-top:10px; font-size:12.5px; color:var(--ink-muted); text-align:center; line-height:1.6; }
+
+/* 선택한 클럽 요약 */
+.dlg-club{
+  display:flex; align-items:center; gap:12px;
+  padding:13px 15px; margin-bottom:20px;
+  background:var(--green-050); border:1px solid var(--green-100);
+  border-radius:var(--radius-sm);
+}
+.dlg-club-label{ font-size:12px; font-weight:700; color:var(--green-text); }
+.dlg-club-name{ font-size:15px; font-weight:800; color:var(--ink-strong); margin-top:2px; }
+
+/* 필드 */
+.field{ margin-bottom:18px; }
+.field > label{
+  display:block; font-size:13.5px; font-weight:700;
+  color:var(--ink-strong); margin-bottom:7px;
+}
+.field .req{ color:#D93025; margin-left:3px; }
+.field .hint{ font-weight:600; color:var(--ink-muted); font-size:12.5px; margin-left:6px; }
+.field input[type="text"],
+.field input[type="email"],
+.field select,
+.field textarea{
+  width:100%; padding:13px 14px;
+  font:inherit; font-size:15px; color:var(--ink-strong);
+  background:#fff; border:1px solid var(--line-strong);
+  border-radius:var(--radius-sm);
+  transition:border-color .15s ease, box-shadow .15s ease;
+  -webkit-appearance:none; appearance:none;
+}
+.field select{
+  background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23767676' stroke-width='1.8' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right 14px center;
+  padding-right:38px;
+}
+.field textarea{ min-height:88px; resize:vertical; line-height:1.6; }
+.field input:focus, .field select:focus, .field textarea:focus{
+  outline:0; border-color:var(--green); box-shadow:0 0 0 3px rgba(3,199,90,.16);
+}
+.field input[aria-invalid="true"], .field select[aria-invalid="true"]{
+  border-color:#D93025; box-shadow:0 0 0 3px rgba(217,48,37,.13);
+}
+.field-err{ margin-top:6px; font-size:12.5px; font-weight:600; color:#C5221F; display:none; }
+.field-err.show{ display:block; }
+.hp{ position:absolute; left:-9999px; width:1px; height:1px; overflow:hidden; }
+
+/* 동의 체크 */
+.consent{
+  border:1px solid var(--line); border-radius:var(--radius-sm);
+  padding:4px 15px; margin-bottom:18px; background:var(--bg-soft);
+}
+.check{ display:flex; gap:11px; padding:13px 0; align-items:flex-start; }
+.check + .check{ border-top:1px solid var(--line); }
+.check input{
+  flex:0 0 auto; width:19px; height:19px; margin:1px 0 0; accent-color:var(--green);
+}
+.check span{ font-size:13.5px; color:var(--ink-body); line-height:1.6; }
+.check b{ color:var(--ink-strong); font-weight:700; }
+.check details{ margin-top:5px; }
+.check summary{ font-size:12.5px; color:var(--ink-muted); cursor:pointer; font-weight:600; }
+.check details p{ margin-top:6px; font-size:12.5px; color:var(--ink-muted); line-height:1.7; }
+
+/* 제출 오류 배너 */
+.dlg-alert{
+  display:none; gap:9px; align-items:flex-start;
+  padding:13px 15px; margin-bottom:18px;
+  background:#FDECEA; border:1px solid #F5C6C2; border-radius:var(--radius-sm);
+  font-size:13.5px; color:#8A1C13; line-height:1.6;
+}
+.dlg-alert.show{ display:flex; }
+
+/* 완료 화면 */
+.dlg-done{ display:none; padding:40px 24px 44px; text-align:center; }
+.dlg-done.show{ display:block; }
+.done-mark{
+  width:60px; height:60px; margin:0 auto 20px; border-radius:50%;
+  background:var(--green-050); border:1px solid var(--green-100);
+  display:grid; place-items:center; font-size:28px;
+}
+.dlg-done h3{ font-size:21px; letter-spacing:-.035em; }
+.dlg-done > p{ margin-top:11px; font-size:14.5px; color:var(--ink-muted); line-height:1.72; }
+.done-card{
+  margin:24px auto 0; max-width:340px; text-align:left;
+  background:var(--bg-soft); border:1px solid var(--line);
+  border-radius:var(--radius-sm); padding:6px 16px;
+}
+.done-card > div{
+  display:flex; gap:12px; padding:11px 0; font-size:13.5px;
+}
+.done-card > div + div{ border-top:1px solid var(--line); }
+.done-card dt{ flex:0 0 72px; color:var(--ink-muted); font-weight:600; }
+.done-card dd{ margin:0; color:var(--ink-strong); font-weight:700; }
+
+.spinner{
+  width:16px; height:16px; flex:0 0 auto;
+  border:2px solid rgba(255,255,255,.4); border-top-color:#fff;
+  border-radius:50%; animation:spin .7s linear infinite;
+}
+@keyframes spin{ to{ transform:rotate(360deg); } }
+
+/* ── How it works ──────────────────────────────────────── */
+.how{ display:grid; gap:14px; grid-template-columns:1fr; }
+@media (min-width:640px){ .how{ grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media (min-width:960px){ .how{ grid-template-columns:repeat(4,minmax(0,1fr)); } }
+.how-card{
+  background:#fff; border:1px solid var(--line); border-radius:var(--radius);
+  padding:24px 22px; box-shadow:var(--shadow-1);
+}
+.how-icon{
+  width:40px; height:40px; border-radius:11px; margin-bottom:15px;
+  background:var(--green-050); border:1px solid var(--green-100);
+  display:grid; place-items:center; font-size:19px;
+}
+.how-card h3{ font-size:16.5px; margin-bottom:7px; }
+.how-card p{ font-size:14px; color:var(--ink-muted); line-height:1.66; }
+
+/* ── Rules ─────────────────────────────────────────────── */
+.rules{ display:grid; gap:14px; grid-template-columns:1fr; }
+@media (min-width:880px){ .rules{ grid-template-columns:repeat(3,minmax(0,1fr)); } }
+.rule{
+  background:#fff; border:1px solid var(--line); border-radius:var(--radius);
+  padding:24px 22px;
+}
+.rule.alert{ background:var(--warn-bg); border-color:var(--warn-line); }
+.rule-tag{
+  display:inline-block; font-size:11.5px; font-weight:800; letter-spacing:.05em;
+  color:var(--ink-muted); margin-bottom:10px;
+}
+.rule.alert .rule-tag{ color:var(--warn-ink); }
+.rule h3{ font-size:16.5px; margin-bottom:9px; }
+.rule.alert h3{ color:#6E4700; }
+.rule p{ font-size:14.5px; color:var(--ink-body); line-height:1.7; }
+.rule.alert p{ color:#6E4700; }
+.rule strong{ font-weight:800; }
+
+.pending{
+  margin-top:20px; background:#fff; border:1px solid var(--line);
+  border-radius:var(--radius); padding:22px;
+}
+.pending h3{ font-size:15.5px; margin-bottom:6px; }
+.pending > p{ font-size:14px; color:var(--ink-muted); margin-bottom:14px; }
+.pending ul{ display:grid; gap:9px; }
+.pending li{
+  display:flex; gap:10px; font-size:14.5px; color:var(--ink-body); line-height:1.6;
+}
+.pending li::before{
+  content:""; flex:0 0 auto; width:8px; height:8px; margin-top:9px;
+  border-radius:50%; border:2px solid var(--line-strong); background:#fff;
+}
+
+/* ── FAQ ───────────────────────────────────────────────── */
+.faq{ border-top:1px solid var(--line); }
+.faq-item{ border-bottom:1px solid var(--line); }
+.faq-q{
+  width:100%; background:none; border:0; text-align:left;
+  padding:20px 44px 20px 0; position:relative;
+  font-size:16px; font-weight:700; color:var(--ink-strong); letter-spacing:-.025em;
+  line-height:1.5;
+}
+.faq-q:hover{ color:var(--green-text); }
+.faq-q .sign{
+  position:absolute; right:6px; top:50%; transform:translateY(-50%);
+  width:22px; height:22px; color:var(--ink-muted);
+  display:grid; place-items:center; font-size:18px; font-weight:400;
+  transition:transform .22s ease, color .15s ease;
+}
+.faq-q[aria-expanded="true"] .sign{ transform:translateY(-50%) rotate(45deg); color:var(--green-text); }
+.faq-a{ display:none; padding:0 8px 22px 0; }
+.faq-a.open{ display:block; }
+.faq-a p{ font-size:15px; color:var(--ink-body); line-height:1.78; max-width:70ch; }
+
+/* ── Steps ─────────────────────────────────────────────── */
+.steps{ display:grid; gap:14px; grid-template-columns:1fr; counter-reset:s; }
+@media (min-width:760px){ .steps{ grid-template-columns:repeat(3,minmax(0,1fr)); } }
+.step{
+  background:#fff; border:1px solid var(--line); border-radius:var(--radius);
+  padding:24px 22px; position:relative;
+}
+.step-n{
+  width:28px; height:28px; border-radius:50%; margin-bottom:14px;
+  background:var(--ink); color:#fff; display:grid; place-items:center;
+  font-size:13.5px; font-weight:800;
+}
+.step h3{ font-size:16px; margin-bottom:6px; }
+.step p{ font-size:14px; color:var(--ink-muted); line-height:1.65; }
+
+/* ── Final CTA ─────────────────────────────────────────── */
+.cta{
+  background:var(--ink); color:#fff;
+  padding:clamp(56px,8vw,92px) 0;
+}
+.cta h2{ color:#fff; font-size:clamp(25px,4.6vw,38px); letter-spacing:-.04em; }
+.cta p{ margin-top:16px; color:rgba(255,255,255,.72); font-size:clamp(15px,2.2vw,17px); max-width:52ch; }
+.cta-in{ text-align:center; display:flex; flex-direction:column; align-items:center; }
+.cta .hero-cta{ justify-content:center; }
+.cta .btn-ghost{ background:transparent; color:#fff; border-color:rgba(255,255,255,.32); }
+.cta .btn-ghost:hover{ background:rgba(255,255,255,.1); border-color:#fff; }
+.cta-note{ margin-top:22px; font-size:13.5px; color:rgba(255,255,255,.5); }
+
+/* ── Footer ────────────────────────────────────────────── */
+.ftr{
+  padding:36px 0 48px; border-top:1px solid var(--line);
+  background:var(--bg-soft); font-size:13.5px; color:var(--ink-muted);
+}
+.ftr-in{ display:flex; flex-wrap:wrap; gap:14px 32px; align-items:flex-start; justify-content:space-between; }
+.ftr strong{ color:var(--ink-body); }
+.ftr-note{ margin-top:12px; line-height:1.7; max-width:56ch; }
+
+/* ── Reveal on scroll ──────────────────────────────────── */
+.reveal{ opacity:0; transform:translateY(14px); }
+.reveal.in{ opacity:1; transform:none; transition:opacity .5s ease, transform .5s ease; }
+@media (prefers-reduced-motion:reduce){ .reveal{ opacity:1; transform:none; } }
+
+@media print{
+  .hdr,.club-actions,.filters,.cta,.skip,#applyDialog{ display:none !important; }
+  .club-detail,.faq-a{ display:block !important; }
+  section{ padding:24px 0; }
+}
+</style>
+</head>
+<body>
+
+<a class="skip" href="#main">본문으로 바로가기</a>
+
+<header class="hdr">
+  <div class="wrap hdr-in">
+    <a class="brand" href="#top">
+      <span class="brand-mark" aria-hidden="true">📖</span>
+      <span>독서 스터디 <span class="brand-sub">4기</span></span>
+    </a>
+    <nav class="nav" aria-label="페이지 내 이동">
+      <a href="#clubs">클럽 4선</a>
+      <a href="#how">운영 방식</a>
+      <a href="#rules">참여 규칙</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+    <a class="btn-sm" data-apply href="#apply">신청하기</a>
+  </div>
+</header>
+
+<main id="main">
+  <div id="top"></div>
+
+  <!-- ═══ HERO ═══ -->
+  <section class="hero">
+    <div class="wrap hero-in">
+      <div class="hero-badges">
+        <span class="badge">4기 멤버 모집</span>
+        <span class="badge badge-neutral">사내 임직원 전용</span>
+      </div>
+      <h1>혼자 읽으면 덮게 되는 책,<br><em>같이 읽으면 끝까지</em> 갑니다.</h1>
+      <p class="hero-lead">
+        투자·경제를 각기 다른 시선으로 읽는 <strong>4개의 클럽</strong>이 열립니다.
+        부동산부터 연금, 투자 심리, 매크로까지 —
+        마음에 드는 테마를 골라 한 달에 한 권, 격주로 만나요.
+      </p>
+      <div class="hero-cta">
+        <a class="btn btn-primary" data-apply href="#apply">클럽 신청하기</a>
+        <a class="btn btn-ghost" href="#clubs">클럽 먼저 둘러보기</a>
+      </div>
+      <dl class="hero-meta">
+        <div>
+          <dt>모집 기간</dt>
+          <dd data-cfg="recruitPeriod"></dd>
+        </div>
+        <div>
+          <dt>모집 규모</dt>
+          <dd>4개 클럽 · 클럽당 10명</dd>
+        </div>
+        <div>
+          <dt>모임 장소</dt>
+          <dd data-cfg="venue"></dd>
+        </div>
+        <div>
+          <dt>참가비</dt>
+          <dd>무료 · 식사+음료 지원</dd>
+        </div>
+      </dl>
+    </div>
+  </section>
+
+  <!-- ═══ KPI ═══ -->
+  <section class="sec-soft" aria-labelledby="glance-h">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <span class="eyebrow">At a glance</span>
+        <h2 class="sec-title" id="glance-h">한눈에 보는 4기</h2>
+      </div>
+      <div class="kpi reveal" id="kpi"></div>
+      <div class="kpi-foot reveal">
+        <span class="badge">🍽️ 식사 + 음료 지원</span>
+        <span>1인당 지원 금액은 <strong data-cfg="mealSupport"></strong> — 공통 가이드가 별도 안내됩니다.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ CLUBS ═══ -->
+  <section id="clubs" aria-labelledby="clubs-h">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <span class="eyebrow">Book clubs</span>
+        <h2 class="sec-title" id="clubs-h">4개의 클럽, 4개의 시선</h2>
+        <p class="sec-desc">
+          클럽마다 텔러(모임장)의 테마가 다릅니다. 테마가 겹치지 않게 구성했으니
+          가장 읽고 싶은 주제를 고르세요. 카드를 펼치면 상세 운영 정보를 볼 수 있어요.
+        </p>
+      </div>
+
+      <div class="filters reveal" role="group" aria-label="요일로 클럽 필터">
+        <span class="filters-label">요일</span>
+        <button class="chip" type="button" data-day="all" aria-pressed="true">전체</button>
+        <button class="chip" type="button" data-day="월" aria-pressed="false">월</button>
+        <button class="chip" type="button" data-day="화" aria-pressed="false">화</button>
+        <button class="chip" type="button" data-day="수" aria-pressed="false">수</button>
+        <button class="chip" type="button" data-day="목" aria-pressed="false">목</button>
+        <button class="chip" type="button" data-day="금" aria-pressed="false">금</button>
+      </div>
+
+      <div class="clubs" id="clubList"></div>
+      <p class="clubs-empty" id="clubsEmpty" hidden>선택한 요일에 열리는 클럽이 없어요. 다른 요일을 골라보세요.</p>
+      <p class="sr" id="filterStatus" role="status" aria-live="polite"></p>
+    </div>
+  </section>
+
+  <!-- ═══ HOW ═══ -->
+  <section id="how" class="sec-soft" aria-labelledby="how-h">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <span class="eyebrow">How it works</span>
+        <h2 class="sec-title" id="how-h">이렇게 운영해요</h2>
+        <p class="sec-desc">모든 클럽에 공통으로 적용되는 기본 운영 방식입니다.</p>
+      </div>
+      <div class="how reveal">
+        <div class="how-card">
+          <div class="how-icon" aria-hidden="true">📖</div>
+          <h3>한 달에 한 권</h3>
+          <p>책은 월 1권 페이스. 첫 도서는 텔러가 정하고, 이후 도서는 모임 내 의견을 모아 고릅니다.</p>
+        </div>
+        <div class="how-card">
+          <div class="how-icon" aria-hidden="true">🗓️</div>
+          <h3>격주로 모임</h3>
+          <p>2주에 한 번, 점심시간에 만납니다. 한 권을 두 번에 나눠 이야기하니 밀려도 따라올 수 있어요.</p>
+        </div>
+        <div class="how-card">
+          <div class="how-icon" aria-hidden="true">📍</div>
+          <h3>사내 공간에서</h3>
+          <p>사내 미팅룸에서 모입니다. 클럽별 확정 장소는 조율 중입니다.</p>
+        </div>
+        <div class="how-card">
+          <div class="how-icon" aria-hidden="true">🍽️</div>
+          <h3>식사 + 음료 지원</h3>
+          <p>모임 식사와 음료를 회사에서 지원합니다. 1인당 지원 금액 가이드는 별도 공지됩니다.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ RULES ═══ -->
+  <section id="rules" aria-labelledby="rules-h">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <span class="eyebrow">Before you apply</span>
+        <h2 class="sec-title" id="rules-h">신청 전에 꼭 확인해주세요</h2>
+        <p class="sec-desc">
+          자리를 기다리는 대기자가 있습니다. 아래 세 가지에 동의할 수 있을 때 신청해주세요.
+        </p>
+      </div>
+      <div class="rules reveal">
+        <div class="rule alert">
+          <span class="rule-tag">출결 관리</span>
+          <h3>2회 불참 시 강제 탈퇴</h3>
+          <p>
+            매 모임 시작 시 <strong>운영 시트에 참석 O/X를 체크</strong>합니다.
+            누적 <strong>2회 불참 시 자동으로 탈퇴</strong> 처리됩니다.
+            휴가·경조사 등 불가피한 사유는 사전에 공유해주시면 예외로 협의합니다.
+          </p>
+        </div>
+        <div class="rule">
+          <span class="rule-tag">대기자 관리</span>
+          <h3>결원은 대기 순번대로</h3>
+          <p>
+            탈퇴로 결원이 생기면 대기자 명단의 순번대로 충원합니다.
+            정원이 찬 클럽도 대기 신청을 받아두니 일단 지원해주세요.
+          </p>
+        </div>
+        <div class="rule">
+          <span class="rule-tag">운영진</span>
+          <h3>운영진이 함께 돕습니다</h3>
+          <p>
+            운영진이 각 텔러의 모임을 돌아가며 참석해 분위기를 살피고,
+            운영에 필요한 부분을 지원합니다.
+          </p>
+        </div>
+      </div>
+
+      <div class="pending reveal">
+        <h3>아직 조율 중인 항목</h3>
+        <p>4기 개편안에서 논의가 진행 중인 내용입니다. 확정되면 이 페이지에 업데이트됩니다.</p>
+        <ul id="pendingList"></ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ FAQ ═══ -->
+  <section id="faq" class="sec-soft" aria-labelledby="faq-h">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <span class="eyebrow">FAQ</span>
+        <h2 class="sec-title" id="faq-h">자주 묻는 질문</h2>
+      </div>
+      <div class="faq reveal" id="faqList"></div>
+    </div>
+  </section>
+
+  <!-- ═══ STEPS ═══ -->
+  <section aria-labelledby="steps-h">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <span class="eyebrow">Process</span>
+        <h2 class="sec-title" id="steps-h">신청부터 첫 모임까지</h2>
+      </div>
+      <div class="steps reveal">
+        <div class="step">
+          <div class="step-n">1</div>
+          <h3>클럽 선택 &amp; 신청</h3>
+          <p>4개 클럽 중 원하는 테마를 골라 신청합니다. 정원 초과 시 대기자로 등록됩니다.</p>
+        </div>
+        <div class="step">
+          <div class="step-n">2</div>
+          <h3>확정 안내</h3>
+          <p>클럽별 멤버가 확정되면 개별 안내를 받습니다. 요일·시간·장소도 이때 확정됩니다.</p>
+        </div>
+        <div class="step">
+          <div class="step-n">3</div>
+          <h3>첫 모임</h3>
+          <p>텔러가 고른 첫 도서로 시작합니다. 다 못 읽어도 괜찮아요 — 읽은 만큼 이야기합니다.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ CTA ═══ -->
+  <section class="cta" id="apply" aria-labelledby="cta-h">
+    <div class="wrap cta-in">
+      <h2 id="cta-h">이번 달에 읽은 책, 몇 권인가요?</h2>
+      <p>한 달에 한 권. 혼자서는 어려웠던 그 페이스를, 열 명이 같이 만듭니다.</p>
+      <div class="hero-cta">
+        <a class="btn btn-primary" data-apply href="#apply">클럽 신청하기</a>
+        <a class="btn btn-ghost" href="#clubs">클럽 다시 보기</a>
+      </div>
+      <p class="cta-note">
+        모집 기간 <span data-cfg="recruitPeriod"></span> · 문의 <span data-cfg="contact"></span>
+      </p>
+    </div>
+  </section>
+</main>
+
+<!-- ═══ 신청 모달 ═══ -->
+<dialog id="applyDialog" aria-labelledby="dlgTitle">
+  <div class="dlg">
+
+    <div class="dlg-head">
+      <div>
+        <h2 id="dlgTitle">독서 클럽 신청</h2>
+        <p>사내 임직원만 신청할 수 있어요. 정원 초과 시 대기자로 등록됩니다.</p>
+      </div>
+      <button class="dlg-close" type="button" data-dlg-close aria-label="닫기">✕</button>
+    </div>
+
+    <form id="applyForm" novalidate>
+      <div class="dlg-body">
+
+        <div class="dlg-alert" id="dlgAlert" role="alert">
+          <span aria-hidden="true">⚠️</span><span id="dlgAlertMsg"></span>
+        </div>
+
+        <div class="dlg-club" id="dlgClub" hidden>
+          <div>
+            <p class="dlg-club-label">선택한 클럽</p>
+            <p class="dlg-club-name" id="dlgClubName"></p>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="fClub">희망 클럽 <span class="req" aria-hidden="true">*</span></label>
+          <select id="fClub" name="club" required></select>
+          <p class="field-err" id="eClub">희망 클럽을 선택해주세요.</p>
+        </div>
+
+        <div class="field">
+          <label for="fClub2">2순위 클럽 <span class="hint">선택 · 정원 초과 시 참고합니다</span></label>
+          <select id="fClub2" name="club2"></select>
+        </div>
+
+        <div class="field">
+          <label for="fName">이름 <span class="req" aria-hidden="true">*</span></label>
+          <input type="text" id="fName" name="name" maxlength="40" autocomplete="name"
+                 placeholder="홍길동" required>
+          <p class="field-err" id="eName">이름을 입력해주세요.</p>
+        </div>
+
+        <div class="field">
+          <label for="fEmail">사내 이메일 <span class="req" aria-hidden="true">*</span></label>
+          <input type="email" id="fEmail" name="email" maxlength="120" autocomplete="email"
+                 placeholder="id@navercorp.com" required>
+          <p class="field-err" id="eEmail"></p>
+        </div>
+
+        <div class="field">
+          <label for="fTeam">소속 조직 <span class="req" aria-hidden="true">*</span></label>
+          <input type="text" id="fTeam" name="team" maxlength="60" autocomplete="organization"
+                 placeholder="예) 금융서비스 · OO팀" required>
+          <p class="field-err" id="eTeam">소속 조직을 입력해주세요.</p>
+        </div>
+
+        <div class="field">
+          <label for="fMessage">텔러에게 하고 싶은 말 <span class="hint">선택 · 500자</span></label>
+          <textarea id="fMessage" name="message" maxlength="500"
+                    placeholder="이 클럽을 고른 이유, 요일 관련 요청 등 자유롭게 적어주세요."></textarea>
+        </div>
+
+        <div class="consent">
+          <label class="check">
+            <input type="checkbox" id="fRules" name="agree_rules" required>
+            <span>
+              <b>참여 규칙에 동의합니다.</b><br>
+              매 모임 시작 시 참석 체크가 이뤄지며, <b>2회 불참 시 강제 탈퇴</b>됩니다.
+              (휴가·경조사 등 사유는 사전 공유 시 협의)
+            </span>
+          </label>
+          <label class="check">
+            <input type="checkbox" id="fPrivacy" name="agree_privacy" required>
+            <span>
+              <b>개인정보 수집·이용에 동의합니다.</b>
+              <details>
+                <summary>수집 항목 및 목적 보기</summary>
+                <p>
+                  · 수집 항목: 이름, 사내 이메일, 소속 조직, 희망 클럽, 남긴 메시지<br>
+                  · 이용 목적: 독서 스터디 4기 클럽 배정 및 운영 안내<br>
+                  · 보유 기간: 4기 운영 종료 후 파기<br>
+                  · 동의를 거부할 수 있으나, 이 경우 신청이 불가합니다.
+                </p>
+              </details>
+            </span>
+          </label>
+          <p class="field-err" id="eAgree" style="margin:0 0 12px">두 항목 모두 동의해야 신청할 수 있어요.</p>
+        </div>
+
+        <!-- 봇 필터용 함정 필드 (사람에게는 보이지 않음) -->
+        <div class="hp" aria-hidden="true">
+          <label for="fWebsite">Website</label>
+          <input type="text" id="fWebsite" name="website" tabindex="-1" autocomplete="off">
+        </div>
+      </div>
+
+      <div class="dlg-foot">
+        <button class="btn btn-primary" type="submit" id="dlgSubmit">신청 완료하기</button>
+        <p class="dlg-foot-note" id="dlgFootNote"></p>
+      </div>
+    </form>
+
+    <div class="dlg-done" id="dlgDone">
+      <div class="done-mark" aria-hidden="true">✓</div>
+      <h3>신청이 접수되었습니다</h3>
+      <p>클럽별 멤버가 확정되면 사내 이메일로 개별 안내를 드립니다.<br>정원 초과 시 대기 순번으로 등록됩니다.</p>
+      <dl class="done-card" id="doneSummary"></dl>
+      <div class="dlg-foot" style="background:none;border:0;padding:26px 0 0">
+        <button class="btn btn-ghost" type="button" data-dlg-close style="width:100%">닫기</button>
+      </div>
+    </div>
+
+  </div>
+</dialog>
+
+<footer class="ftr">
+  <div class="wrap ftr-in">
+    <div>
+      <strong>독서 스터디 4기</strong><br>
+      운영진 <span data-cfg="contact"></span>
+      <p class="ftr-note">
+        사내 임직원 전용 안내 페이지입니다. 클럽 구성과 운영 방식은 4기 개편안 논의에 따라
+        변경될 수 있으며, 변경 시 이 페이지에 반영됩니다.
+      </p>
+    </div>
+    <div>기준일 <span data-cfg="asOf"></span></div>
+  </div>
+</footer>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   ▼▼▼ 여기만 수정하면 페이지 전체가 갱신됩니다 ▼▼▼
+   ═══════════════════════════════════════════════════════════ */
+
+/** 아직 확정되지 않은 값은 모두 이 상수를 씁니다. */
+const TBD = "추후 공지";
+
+const CONFIG = {
+  recruitPeriod: TBD,
+  mealSupport:   TBD,          // 1인당 식사·음료 지원 금액
+  venue:         "사내 미팅룸 (조율 중)",
+  contact:       "백송이",
+  contactEmail:  "",           // 채우면 문의처가 mailto 링크가 됩니다
+  asOf:          "2026.07.01 개편안 기준",
+
+  /** 신청 가능한 사내 이메일 도메인 (Supabase 쪽에서도 동일하게 재검증합니다) */
+  allowedEmailDomains: ["navercorp.com", "snowcorp.com"],
+};
+
+/* ───────────────────────────────────────────────────────────
+   신청 내역 저장소 (Supabase)
+   ───────────────────────────────────────────────────────────
+   Supabase 프로젝트 > Settings > API 에서 두 값을 복사해 넣으세요.
+     url = Project URL            예) https://abcdefgh.supabase.co
+     key = anon public key        (반드시 anon 키. service_role 키는 절대 넣지 마세요)
+
+   anon 키는 브라우저에 노출되는 게 정상입니다. 실제 방어선은 DB 쪽 RLS 정책이고,
+   applications 테이블은 INSERT 만 허용돼 있어 아무도 남의 신청서를 읽을 수 없습니다.
+   두 값이 비어 있으면 폼은 "준비 중" 안내만 띄우고 전송하지 않습니다.        */
+const SUPABASE = {
+  url:   "",
+  key:   "",
+  table: "applications",
+};
+
+/**
+ * 텔러 프로필 사진 (base64 인라인 — 외부 파일 없이 이 파일 하나로 동작합니다).
+ * 원본: 같은 폴더의 신동걸.png / 정지혜.png / 강민구.png / 백송이.png
+ * 가공: 중앙 정사각 크롭(좌상단 표식 제거) → 160x160 → JPEG q82
+ * 교체 방법: 새 사진을 같은 방식으로 만든 뒤 아래 문자열만 바꾸거나,
+ *          "신동걸.png" 처럼 파일 경로를 직접 넣어도 됩니다(같은 폴더에 두세요).
+ */
+const PHOTOS = {
+  "신동걸": "",
+  "정지혜": "",
+  "강민구": "",
+  "백송이": "",
+};
+
+/** 엑셀 '독서 스터디 4기 개편안' B17:J20 내용 */
+const CLUBS = [
+  {
+    teller:   "신동걸",
+    photo:    PHOTOS["신동걸"],
+    tagline:  "투자 A to Z, 편향 없이 다 읽기",
+    theme:    "투자 A-Z 모든 도서를 섭렵합니다. 한쪽으로 편향되지 않는 다채로운 도서 선택 — 주식, 부동산 등을 돌아가며 진행해 모두의 취향을 담습니다.",
+    keywords: ["주식", "부동산", "폭넓게"],
+    book:     "나의 첫번째 부동산 교과서",
+    bookCycle:"1달 1권",
+    meetCycle:"격주",
+    when:     "점심",
+    days:     ["수"],
+    daysLabel:"수요일",
+    place:    "사내 미팅룸 (조율 중)",
+    support:  "음료 + 식사",
+    capacity: 10,
+  },
+  {
+    teller:   "정지혜",
+    photo:    PHOTOS["정지혜"],
+    tagline:  "바빠도 1권은 제대로 읽자",
+    theme:    "바쁜 사람들을 위해 한 권이라도 잘 읽는 데 집중합니다. 연금과 자산배분처럼 미뤄두기 쉬운, 그러나 빠를수록 좋은 주제를 다룹니다.",
+    keywords: ["연금", "자산배분", "완독"],
+    book:     "박곰희의 연금부자수업",
+    bookCycle:"1달 1권",
+    meetCycle:"격주",
+    when:     "점심",
+    days:     ["화","수","목"],
+    daysLabel:"화·수·목 중 (일정 변동)",
+    place:    TBD,
+    support:  TBD,
+    capacity: 10,
+  },
+  {
+    teller:   "강민구",
+    photo:    PHOTOS["강민구"],
+    tagline:  "잘 사고 잘 파는 건, 결국 멘탈",
+    theme:    "투자자의 멘탈을 다룹니다. 주식하는 마음과 투자자 심리 — 종목이 아니라 나 자신을 읽는 쪽에 가깝습니다.",
+    keywords: ["투자심리", "멘탈", "행동경제"],
+    book:     "주식하는 마음",
+    bookCycle:"1달 1권",
+    meetCycle:"격주",
+    when:     "점심",
+    days:     ["화","수","목"],
+    daysLabel:"화·수·목 중 (일정 변동)",
+    place:    TBD,
+    support:  TBD,
+    capacity: 10,
+  },
+  {
+    teller:   "백송이",
+    photo:    PHOTOS["백송이"],
+    tagline:  "정답보다 길목을 보는 시야",
+    theme:    "거시경제와 지정학의 큰 흐름을 함께 읽어요. 정답을 맞히는 대신 길목을 보는 시야를 키워봐요! 매크로 경제와 글로벌 금융을 다룹니다.",
+    keywords: ["매크로", "지정학", "글로벌금융"],
+    book:     "부의 갈림길",
+    bookCycle:"1달 1권",
+    meetCycle:"격주",
+    when:     "점심",
+    days:     ["월","수","금"],
+    daysLabel:"월·수·금 중 (일정 변동)",
+    place:    TBD,
+    support:  TBD,
+    capacity: 10,
+  },
+];
+
+/** 개편안에서 아직 논의 중인 아젠다 */
+const PENDING = [
+  "모임 시간대 — 아침 / 점심 / 저녁 중 클럽별 확정",
+  "도서 주기 — 한 달 1권 유지 여부",
+  "모임 장소 — 사내 미팅룸 / 식사 장소",
+  "모임 주기 — 클럽별 격주 기준 조정",
+  "비용 지원 금액 — 1인당 가이드 금액",
+];
+
+const FAQS = [
+  {
+    q: "여러 클럽에 같이 신청할 수 있나요?",
+    a: "클럽마다 테마가 겹치지 않게 구성했기 때문에 관심 주제가 여러 개일 수 있어요. 다만 중복 참여 가능 여부는 정원과 출결 관리를 고려해 " + TBD + "입니다. 우선 가장 읽고 싶은 클럽 한 곳을 골라 신청해주세요.",
+  },
+  {
+    q: "책은 누가, 어떻게 정하나요?",
+    a: "각 클럽 텔러가 테마에 맞춰 선정합니다. 첫 도서는 이미 정해져 클럽 카드에 공개되어 있고, 이후 도서는 모임에서 멤버 의견을 모아 고릅니다. 한 사람 취향에 치우치지 않는 것을 원칙으로 합니다.",
+  },
+  {
+    q: "책값도 지원되나요?",
+    a: "확정된 지원 범위는 모임의 식사와 음료입니다. 도서 구입비 지원 여부는 " + TBD + "예요.",
+  },
+  {
+    q: "모임 요일이 제 일정과 안 맞으면요?",
+    a: "대부분의 클럽은 특정 요일을 고정하지 않고, 정해진 요일 후보 안에서 상황에 따라 유동적으로 잡습니다. 확정 일정은 클럽 멤버가 모인 뒤 텔러와 함께 조율합니다.",
+  },
+  {
+    q: "책을 다 못 읽고 가도 괜찮을까요?",
+    a: "괜찮습니다. 한 권을 격주 두 번에 나눠 이야기하는 구조라 읽은 만큼만 가져와도 대화가 됩니다. '바빠도 1권은 제대로' 클럽처럼 완독 자체를 목표로 삼는 클럽도 있어요.",
+  },
+  {
+    q: "참석을 못 하는 날이 생기면 어떻게 되나요?",
+    a: "매 모임 시작 시 운영 시트에 참석 O/X를 체크하며, 누적 2회 불참 시 강제 탈퇴됩니다. 휴가·경조사 등 불가피한 사유는 사전에 공유해주시면 예외로 협의합니다.",
+  },
+  {
+    q: "지금 정원이 찼는데, 중간에 합류할 수 있나요?",
+    a: "네. 강제 탈퇴 등으로 결원이 생기면 대기자 명단 순번대로 충원합니다. 정원이 찬 클럽도 대기 신청을 받아둡니다.",
+  },
+  {
+    q: "그 외 문의는 어디로 하면 되나요?",
+    a: "운영진 " + CONFIG.contact + " 에게 문의해주세요.",
+  },
+];
+
+/* ═══════════════════════════════════════════════════════════
+   ▲▲▲ 여기까지가 수정 영역 ▲▲▲   아래는 렌더링 로직
+   ═══════════════════════════════════════════════════════════ */
+
+const $  = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) =>
+  ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
+
+/** TBD 값은 노란 배지로 감싸 눈에 띄게 */
+const val = (v) => v === TBD
+  ? `<span class="badge badge-tbd">${esc(TBD)}</span>`
+  : esc(v);
+
+/* ── CONFIG 바인딩 ─────────────────────────────────────── */
+$$("[data-cfg]").forEach((el) => {
+  el.innerHTML = val(CONFIG[el.dataset.cfg] ?? "");
+});
+if (CONFIG.contactEmail) {
+  $$('[data-cfg="contact"]').forEach((el) => {
+    el.innerHTML = `<a href="mailto:${esc(CONFIG.contactEmail)}">${esc(CONFIG.contact)}</a>`;
+  });
+}
+
+/* ── KPI 타일 ──────────────────────────────────────────── */
+const totalSeats = CLUBS.reduce((n, c) => n + c.capacity, 0);
+const TILES = [
+  { label:"열리는 클럽",   value:CLUBS.length, unit:"개",  note:"테마가 겹치지 않는 4개 구성" },
+  { label:"모집 인원",     value:totalSeats,   unit:"명",  note:`클럽당 ${CLUBS[0].capacity}명 정원` },
+  { label:"함께 읽는 책",  value:1,            unit:"권/월", note:"첫 도서는 텔러가 선정" },
+  { label:"모임 주기",     value:2,            unit:"주 1회", note:"점심시간 · 사내" },
+];
+$("#kpi").innerHTML = TILES.map((t) => `
+  <div class="tile">
+    <p class="tile-label">${esc(t.label)}</p>
+    <p class="tile-value">${t.value}<span class="unit">${esc(t.unit)}</span></p>
+    <p class="tile-note">${esc(t.note)}</p>
+  </div>`).join("");
+
+/* ── 클럽 카드 ─────────────────────────────────────────── */
+$("#clubList").innerHTML = CLUBS.map((c, i) => {
+  const id = `club-${i}`;
+  return `
+  <article class="club" data-days="${c.days.join(",")}">
+    <div class="club-top" aria-hidden="true"></div>
+    <div class="club-body">
+      <p class="club-no">CLUB ${String(i + 1).padStart(2, "0")}</p>
+
+      <div class="club-teller">
+        <div class="club-avatar">${
+          c.photo
+            ? `<img src="${c.photo}" alt="텔러 ${esc(c.teller)}" loading="lazy" decoding="async" width="54" height="54">`
+            : `<span aria-hidden="true">${esc(c.teller.charAt(0))}</span>`
+        }</div>
+        <div>
+          <p class="club-teller-name">${esc(c.teller)}</p>
+          <p class="club-teller-role">텔러 · 모임장</p>
+        </div>
+      </div>
+
+      <h3 class="club-tagline">${esc(c.tagline)}</h3>
+      <div class="club-keywords">${c.keywords.map((k) => `<span class="kw"># ${esc(k)}</span>`).join("")}</div>
+
+      <div class="club-book">
+        <div class="book-spine" aria-hidden="true"></div>
+        <div>
+          <p class="club-book-label">첫 도서</p>
+          <p class="club-book-title">${esc(c.book)}</p>
+        </div>
+      </div>
+
+      <dl class="club-facts">
+        <div class="fact"><dt>모임 시간</dt><dd>${esc(c.when)}<small>${esc(c.daysLabel)}</small></dd></div>
+        <div class="fact"><dt>모임 주기</dt><dd>${esc(c.meetCycle)}<small>책 ${esc(c.bookCycle)}</small></dd></div>
+        <div class="fact"><dt>정원</dt><dd>${c.capacity}명</dd></div>
+        <div class="fact"><dt>장소</dt><dd>${val(c.place)}</dd></div>
+      </dl>
+    </div>
+
+    <div class="club-actions">
+      <button class="club-apply" type="button" data-apply-club="${esc(c.teller)}">
+        이 클럽 신청하기
+      </button>
+      <button class="club-toggle" type="button" aria-expanded="false" aria-controls="${id}">
+        <span class="label">자세히</span>
+        <span class="caret" aria-hidden="true">▼</span>
+      </button>
+    </div>
+
+    <div class="club-detail" id="${id}">
+      <h4>어떤 이야기를 하나요</h4>
+      <p>${esc(c.theme)}</p>
+      <dl class="detail-rows">
+        <div><dt>텔러</dt><dd>${esc(c.teller)}</dd></div>
+        <div><dt>첫 도서</dt><dd>${esc(c.book)}</dd></div>
+        <div><dt>책 주기</dt><dd>${esc(c.bookCycle)}</dd></div>
+        <div><dt>모임 주기</dt><dd>${esc(c.meetCycle)}</dd></div>
+        <div><dt>모임 시간</dt><dd>${esc(c.when)} · ${esc(c.daysLabel)}</dd></div>
+        <div><dt>장소</dt><dd>${val(c.place)}</dd></div>
+        <div><dt>지원 항목</dt><dd>${val(c.support)}</dd></div>
+        <div><dt>정원</dt><dd>${c.capacity}명</dd></div>
+      </dl>
+    </div>
+  </article>`;
+}).join("");
+
+/* 카드 아코디언 */
+$$(".club-toggle").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const open   = btn.getAttribute("aria-expanded") === "true";
+    const detail = document.getElementById(btn.getAttribute("aria-controls"));
+    btn.setAttribute("aria-expanded", String(!open));
+    detail.classList.toggle("open", !open);
+    $(".label", btn).textContent = open ? "자세히" : "접기";
+  });
+});
+
+/* ── 요일 필터 ─────────────────────────────────────────── */
+const chips  = $$(".chip");
+const cards  = $$(".club");
+const empty  = $("#clubsEmpty");
+const liveMsg = $("#filterStatus");
+
+chips.forEach((chip) => {
+  chip.addEventListener("click", () => {
+    const day = chip.dataset.day;
+    chips.forEach((c) => c.setAttribute("aria-pressed", String(c === chip)));
+
+    let shown = 0;
+    cards.forEach((card) => {
+      const hit = day === "all" || card.dataset.days.split(",").includes(day);
+      card.hidden = !hit;
+      if (hit) shown++;
+    });
+
+    empty.hidden = shown > 0;
+    liveMsg.textContent = day === "all"
+      ? `전체 ${shown}개 클럽을 표시합니다.`
+      : `${day}요일에 열리는 클럽 ${shown}개를 표시합니다.`;
+  });
+});
+
+/* ══════════════════════════════════════════════════════════
+   신청 모달
+   ══════════════════════════════════════════════════════════ */
+const dlg       = $("#applyDialog");
+const form      = $("#applyForm");
+const dlgDone   = $("#dlgDone");
+const dlgAlert  = $("#dlgAlert");
+const submitBtn = $("#dlgSubmit");
+const clubBox   = $("#dlgClub");
+const selClub   = $("#fClub");
+const selClub2  = $("#fClub2");
+
+const READY = Boolean(SUPABASE.url && SUPABASE.key);
+
+/* 클럽 셀렉트 옵션 채우기 — CLUBS 를 그대로 재사용 */
+selClub.innerHTML =
+  `<option value="">클럽을 선택해주세요</option>` +
+  CLUBS.map((c) => `<option value="${esc(c.teller)}">${esc(c.teller)} — ${esc(c.tagline)}</option>`).join("");
+selClub2.innerHTML =
+  `<option value="">선택하지 않음</option>` +
+  CLUBS.map((c) => `<option value="${esc(c.teller)}">${esc(c.teller)} — ${esc(c.tagline)}</option>`).join("");
+
+$("#dlgFootNote").innerHTML = READY
+  ? `신청 후에는 수정이 어렵습니다. 문의는 운영진 ${esc(CONFIG.contact)}에게 해주세요.`
+  : `<strong>신청 접수는 준비 중입니다.</strong> 오픈되면 이 페이지로 다시 안내드립니다.`;
+if (!READY) submitBtn.disabled = true;
+
+/* ── 열기 / 닫기 ──────────────────────────────────────── */
+function openApply(club) {
+  resetForm();
+  if (club) {
+    selClub.value = club;
+    $("#dlgClubName").textContent = club + " 텔러의 클럽";
+    clubBox.hidden = false;
+    // 1순위가 정해졌으면 2순위 목록에서 같은 클럽은 빼둔다
+    syncSecondChoice();
+  } else {
+    clubBox.hidden = true;
+  }
+  if (typeof dlg.showModal === "function") {
+    dlg.showModal();
+  } else {
+    dlg.setAttribute("open", "");   // <dialog> 미지원 브라우저 폴백
+  }
+  // 첫 입력 요소로 포커스 (클럽이 이미 정해졌으면 이름부터)
+  setTimeout(() => (club ? $("#fName") : selClub).focus(), 60);
+}
+
+function closeApply() {
+  if (typeof dlg.close === "function") dlg.close();
+  else dlg.removeAttribute("open");
+}
+
+$$("[data-apply-club]").forEach((btn) => {
+  btn.addEventListener("click", () => openApply(btn.dataset.applyClub));
+});
+/* 헤더·히어로·하단 CTA 의 전역 신청 버튼 — 클럽 미선택으로 열기 */
+$$("[data-apply]").forEach((el) => {
+  el.addEventListener("click", (e) => { e.preventDefault(); openApply(null); });
+});
+$$("[data-dlg-close]").forEach((b) => b.addEventListener("click", closeApply));
+
+/* backdrop 클릭으로 닫기 (dialog 자체 영역 = backdrop) */
+dlg.addEventListener("click", (e) => { if (e.target === dlg) closeApply(); });
+
+/* 1순위와 2순위가 같아지지 않게 */
+selClub.addEventListener("change", syncSecondChoice);
+function syncSecondChoice() {
+  $$("option", selClub2).forEach((o) => {
+    o.disabled = Boolean(o.value) && o.value === selClub.value;
+  });
+  if (selClub2.value && selClub2.value === selClub.value) selClub2.value = "";
+}
+
+/* ── 검증 ─────────────────────────────────────────────── */
+const domainOk = (email) => {
+  const m = /^[^@\s]+@([^@\s]+)$/.exec(email.trim());
+  return Boolean(m) && CONFIG.allowedEmailDomains.includes(m[1].toLowerCase());
+};
+
+function setErr(inputId, errId, msg) {
+  const input = inputId ? $("#" + inputId) : null;   // 동의 체크처럼 대상 input 이 없는 경우도 있다
+  const err = $("#" + errId);
+  const bad = Boolean(msg);
+  if (input) input.setAttribute("aria-invalid", String(bad));
+  if (err) {
+    if (msg) err.textContent = msg;
+    err.classList.toggle("show", bad);
+  }
+  return !bad;
+}
+
+function validate() {
+  const domains = CONFIG.allowedEmailDomains.map((d) => "@" + d).join(" 또는 ");
+  const email = $("#fEmail").value.trim();
+
+  const checks = [
+    setErr("fClub",  "eClub",  selClub.value ? "" : "희망 클럽을 선택해주세요."),
+    setErr("fName",  "eName",  $("#fName").value.trim() ? "" : "이름을 입력해주세요."),
+    setErr("fEmail", "eEmail",
+      !email ? "사내 이메일을 입력해주세요."
+      : !domainOk(email) ? `${domains} 주소로만 신청할 수 있어요.`
+      : ""),
+    setErr("fTeam",  "eTeam",  $("#fTeam").value.trim() ? "" : "소속 조직을 입력해주세요."),
+    setErr("",       "eAgree",
+      $("#fRules").checked && $("#fPrivacy").checked ? "" : "두 항목 모두 동의해야 신청할 수 있어요."),
+  ];
+  return checks.every(Boolean);
+}
+
+function resetForm() {
+  form.reset();
+  form.hidden = false;
+  dlgDone.classList.remove("show");
+  dlgAlert.classList.remove("show");
+  ["eClub", "eName", "eEmail", "eTeam", "eAgree"].forEach((id) => $("#" + id).classList.remove("show"));
+  $$("[aria-invalid]", form).forEach((el) => el.removeAttribute("aria-invalid"));
+  setSubmitting(false);
+  syncSecondChoice();
+}
+
+function setSubmitting(on) {
+  submitBtn.disabled = on || !READY;
+  submitBtn.innerHTML = on
+    ? `<span class="spinner" aria-hidden="true"></span>전송 중…`
+    : "신청 완료하기";
+}
+
+function showAlert(msg) {
+  $("#dlgAlertMsg").innerHTML = msg;
+  dlgAlert.classList.add("show");
+  $(".dlg-body").scrollTop = 0;
+}
+
+/* ── 제출 ─────────────────────────────────────────────── */
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  dlgAlert.classList.remove("show");
+
+  // honeypot: 봇이 채운 경우. 조용히 성공 화면만 보여주고 저장하지 않는다.
+  if ($("#fWebsite").value.trim()) { showDone({ club: selClub.value }); return; }
+
+  if (!validate()) {
+    $(`[aria-invalid="true"]`, form)?.focus();
+    return;
+  }
+  if (!READY) {
+    showAlert("신청 접수가 아직 열리지 않았습니다. 잠시 후 다시 시도해주세요.");
+    return;
+  }
+
+  const payload = {
+    name:          $("#fName").value.trim(),
+    email:         $("#fEmail").value.trim().toLowerCase(),
+    team:          $("#fTeam").value.trim(),
+    club:          selClub.value,
+    club2:         selClub2.value || null,
+    message:       $("#fMessage").value.trim() || null,
+    agree_rules:   true,
+    agree_privacy: true,
+  };
+
+  setSubmitting(true);
+  try {
+    const res = await fetch(`${SUPABASE.url}/rest/v1/${SUPABASE.table}`, {
+      method: "POST",
+      headers: {
+        apikey: SUPABASE.key,
+        Authorization: `Bearer ${SUPABASE.key}`,
+        "Content-Type": "application/json",
+        // 기본값은 삽입한 행을 돌려주려 하는데, anon 에게 SELECT 권한이 없으므로 반드시 minimal
+        Prefer: "return=minimal",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (res.ok) { showDone(payload); return; }
+
+    if (res.status === 409) {
+      showAlert("이미 이 클럽에 신청하신 이력이 있어요. 다른 클럽을 선택하시거나 운영진에게 문의해주세요.");
+    } else if (res.status === 400 || res.status === 422) {
+      showAlert("입력값을 다시 확인해주세요. 사내 이메일 주소로만 신청할 수 있습니다.");
+    } else if (res.status === 401 || res.status === 403) {
+      showAlert(`신청 접수 설정에 문제가 있습니다. 운영진 ${esc(CONFIG.contact)}에게 알려주세요.`);
+    } else {
+      showAlert(`전송에 실패했습니다 (오류 ${res.status}). 잠시 후 다시 시도하시거나 운영진에게 문의해주세요.`);
+    }
+  } catch (err) {
+    showAlert("네트워크 연결을 확인한 뒤 다시 시도해주세요.");
+  } finally {
+    setSubmitting(false);
+  }
+});
+
+function showDone(p) {
+  const club = CLUBS.find((c) => c.teller === p.club);
+  $("#doneSummary").innerHTML = [
+    ["신청 클럽", p.club ? `${p.club} 텔러` : "-"],
+    ["첫 도서",   club ? club.book : "-"],
+    ["모임",      club ? `${club.when} · ${club.daysLabel}` : "-"],
+    p.club2 ? ["2순위", `${p.club2} 텔러`] : null,
+  ].filter(Boolean).map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join("");
+  form.hidden = true;
+  dlgDone.classList.add("show");
+  $(".dlg-body").scrollTop = 0;
+}
+
+/* ── 조율 중 항목 ──────────────────────────────────────── */
+$("#pendingList").innerHTML = PENDING.map((p) => `<li>${esc(p)}</li>`).join("");
+
+/* ── FAQ ───────────────────────────────────────────────── */
+$("#faqList").innerHTML = FAQS.map((f, i) => `
+  <div class="faq-item">
+    <h3>
+      <button class="faq-q" type="button" id="faq-q-${i}" aria-expanded="false" aria-controls="faq-a-${i}">
+        ${esc(f.q)}<span class="sign" aria-hidden="true">+</span>
+      </button>
+    </h3>
+    <div class="faq-a" id="faq-a-${i}" role="region" aria-labelledby="faq-q-${i}"><p>${esc(f.a)}</p></div>
+  </div>`).join("");
+
+$$(".faq-q").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const open = btn.getAttribute("aria-expanded") === "true";
+    btn.setAttribute("aria-expanded", String(!open));
+    document.getElementById(btn.getAttribute("aria-controls")).classList.toggle("open", !open);
+  });
+});
+
+/* ── 스크롤 스파이 ─────────────────────────────────────── */
+const navLinks = $$(".nav a");
+const sections = navLinks
+  .map((a) => document.querySelector(a.getAttribute("href")))
+  .filter(Boolean);
+
+if ("IntersectionObserver" in window) {
+  const spy = new IntersectionObserver((entries) => {
+    entries.forEach((e) => {
+      if (!e.isIntersecting) return;
+      navLinks.forEach((a) =>
+        a.setAttribute("aria-current", String(a.getAttribute("href") === "#" + e.target.id)));
+    });
+  }, { rootMargin: "-25% 0px -70% 0px" });
+  sections.forEach((s) => spy.observe(s));
+
+  /* ── 스크롤 등장 ─────────────────────────────────────── */
+  const reveal = new IntersectionObserver((entries, obs) => {
+    entries.forEach((e) => {
+      if (!e.isIntersecting) return;
+      e.target.classList.add("in");
+      obs.unobserve(e.target);
+    });
+  }, { rootMargin: "0px 0px -8% 0px", threshold: 0.05 });
+  $$(".reveal").forEach((el) => reveal.observe(el));
+} else {
+  $$(".reveal").forEach((el) => el.classList.add("in"));
+}
+</script>
+</body>
+</html>
