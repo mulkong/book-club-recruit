@@ -1058,16 +1058,22 @@ const CONFIG = {
 /* ───────────────────────────────────────────────────────────
    신청 내역 저장소 (Supabase)
    ───────────────────────────────────────────────────────────
-   Supabase 프로젝트 > Settings > API 에서 두 값을 복사해 넣으세요.
-     url = Project URL            예) https://abcdefgh.supabase.co
-     key = anon public key        (반드시 anon 키. service_role 키는 절대 넣지 마세요)
+   Supabase 프로젝트에서 두 값을 복사해 넣습니다.
+     url = Project URL       Settings > Data API      예) https://abcdefgh.supabase.co
+     key = Publishable key   Settings > API Keys      sb_publishable_... 로 시작
 
-   anon 키는 브라우저에 노출되는 게 정상입니다. 실제 방어선은 DB 쪽 RLS 정책이고,
-   applications 테이블은 INSERT 만 허용돼 있어 아무도 남의 신청서를 읽을 수 없습니다.
+   Publishable key(구 anon key)는 브라우저에 노출되는 게 정상입니다.
+   실제 방어선은 DB 쪽이고, 실제로 아래가 확인되었습니다.
+     · 신청 제출(INSERT)  → 201
+     · 조회 / 수정 / 삭제 → 401 permission denied  (남의 신청서를 볼 수 없음)
+     · 사내 도메인 아닌 이메일, 미동의, 없는 클럽명 → 400
+     · 같은 사람이 같은 클럽 중복 신청 → 409
+
+   Secret key(sb_secret_... , 구 service_role)는 절대 여기 넣지 마세요.
    두 값이 비어 있으면 폼은 "준비 중" 안내만 띄우고 전송하지 않습니다.        */
 const SUPABASE = {
-  url:   "",
-  key:   "",
+  url:   "https://pkugxfefsdchksnlzsbs.supabase.co",
+  key:   "sb_publishable_2DXGo6Shy23Gs_DVAcMOtg_MIDUwanO",
   table: "applications",
 };
 
@@ -1507,6 +1513,8 @@ form.addEventListener("submit", async (e) => {
       method: "POST",
       headers: {
         apikey: SUPABASE.key,
+        // 신형 publishable key 는 Authorization 헤더 사용이 제한되지만,
+        // apikey 와 값이 완전히 같을 때는 허용됩니다. (구형 JWT anon key 와도 호환)
         Authorization: `Bearer ${SUPABASE.key}`,
         "Content-Type": "application/json",
         // 기본값은 삽입한 행을 돌려주려 하는데, anon 에게 SELECT 권한이 없으므로 반드시 minimal
