@@ -366,6 +366,30 @@ section{ padding:clamp(52px, 8vw, 96px) 0; }
 }
 .club-apply:hover{ background:var(--green-hover); box-shadow:0 6px 16px rgba(3,199,90,.3); }
 .club-apply:active{ transform:translateY(1px); }
+.club-apply .lock{ display:none; font-size:12px; }
+
+/* ── 오픈 전 잠긴 상태 ─────────────────────────────────────
+   신청 버튼은 회색으로 바뀌고 클릭이 되지 않습니다.          */
+.club-apply.is-locked{
+  background:var(--bg-sunken); color:var(--ink-muted);
+  box-shadow:none; cursor:not-allowed; font-size:14px;
+  border:1px solid var(--line-strong);
+}
+.club-apply.is-locked:hover{ background:var(--bg-sunken); box-shadow:none; }
+.club-apply.is-locked:active{ transform:none; }
+.club-apply.is-locked .lock{ display:inline; }
+
+/* 헤더·히어로·하단 CTA 의 전역 신청 버튼 */
+.btn.is-locked, .btn-sm.is-locked{
+  background:var(--bg-sunken) !important; color:var(--ink-muted) !important;
+  border-color:var(--line-strong) !important;
+  box-shadow:none !important; cursor:not-allowed; pointer-events:none;
+}
+.cta .btn.is-locked{
+  background:rgba(255,255,255,.12) !important; color:rgba(255,255,255,.6) !important;
+  border-color:rgba(255,255,255,.2) !important;
+}
+.hdr .btn-sm.is-locked{ font-size:13.5px; }
 
 .club-toggle{
   flex:0 0 auto; min-height:46px; padding:0 16px;
@@ -691,7 +715,7 @@ section{ padding:clamp(52px, 8vw, 96px) 0; }
   <section class="hero">
     <div class="wrap hero-in">
       <div class="hero-badges">
-        <span class="badge">4기 멤버 모집</span>
+        <span class="badge" id="openBadge">4기 멤버 모집</span>
         <span class="badge badge-neutral">사내 임직원 전용</span>
       </div>
       <h1>혼자 읽으면 덮게 되는 책,<br><em>같이 읽으면 끝까지</em> 갑니다.</h1>
@@ -946,9 +970,9 @@ section{ padding:clamp(52px, 8vw, 96px) 0; }
         </div>
 
         <div class="field">
-          <label for="fEmail">사내 이메일 <span class="req" aria-hidden="true">*</span></label>
+          <label for="fEmail">이메일 <span class="req" aria-hidden="true">*</span></label>
           <input type="email" id="fEmail" name="email" maxlength="120" autocomplete="email"
-                 placeholder="id@navercorp.com" required>
+                 placeholder="name@example.com" required>
           <p class="field-err" id="eEmail"></p>
         </div>
 
@@ -981,7 +1005,7 @@ section{ padding:clamp(52px, 8vw, 96px) 0; }
               <details>
                 <summary>수집 항목 및 목적 보기</summary>
                 <p>
-                  · 수집 항목: 이름, 사내 이메일, 소속 조직, 희망 클럽, 남긴 메시지<br>
+                  · 수집 항목: 이름, 이메일, 소속 조직, 희망 클럽, 남긴 메시지<br>
                   · 이용 목적: 독서 스터디 4기 클럽 배정 및 운영 안내<br>
                   · 보유 기간: 4기 운영 종료 후 파기<br>
                   · 동의를 거부할 수 있으나, 이 경우 신청이 불가합니다.
@@ -1008,7 +1032,7 @@ section{ padding:clamp(52px, 8vw, 96px) 0; }
     <div class="dlg-done" id="dlgDone">
       <div class="done-mark" aria-hidden="true">✓</div>
       <h3>신청이 접수되었습니다</h3>
-      <p>클럽별 멤버가 확정되면 사내 이메일로 개별 안내를 드립니다.<br>정원 초과 시 대기 순번으로 등록됩니다.</p>
+      <p>클럽별 멤버가 확정되면 입력하신 이메일로 개별 안내를 드립니다.<br>정원 초과 시 대기 순번으로 등록됩니다.</p>
       <dl class="done-card" id="doneSummary"></dl>
       <div class="dlg-foot" style="background:none;border:0;padding:26px 0 0">
         <button class="btn btn-ghost" type="button" data-dlg-close style="width:100%">닫기</button>
@@ -1035,12 +1059,45 @@ const CONFIG = {
      이름을 넣으면 "운영진 홍길동에게 문의해주세요" 처럼 표시됩니다. */
   contact:       "",
 
-  /** 신청 가능한 사내 이메일 도메인 (Supabase 쪽에서도 동일하게 재검증합니다) */
-  allowedEmailDomains: ["navercorp.com", "snowcorp.com"],
+  /* ═══ 신청 오픈 시점 ═══ 이 값 하나로 신청 버튼이 잠기고 열립니다.
+       ""                          → 잠김. "신청 오픈 준비 중" 회색 버튼.
+       "open"                      → 즉시 오픈.
+       "2026-08-11T10:00:00+09:00" → 그 시각까지 잠기고, 시각이 되면
+                                     새로고침 없이 자동으로 열립니다.
+     날짜는 반드시 +09:00 (KST) 를 붙여주세요.                        */
+  applyOpensAt:  "",
 };
 
 /** 안내 문구에 들어갈 문의처 표기. 담당자가 없으면 이름 없이 "운영진". */
 const CONTACT = CONFIG.contact ? `운영진 ${CONFIG.contact}` : "운영진";
+
+/* ── 신청 오픈 상태 판정 ────────────────────────────────────
+   30초마다 다시 계산해서, 오픈 시각이 되면 페이지를 새로 열지 않아도
+   버튼이 활성화됩니다.                                           */
+const OPEN_AT = (() => {
+  const v = String(CONFIG.applyOpensAt || "").trim();
+  if (!v || v === "open") return null;
+  const d = new Date(v);
+  return Number.isNaN(d.getTime()) ? null : d;   // 형식이 잘못되면 잠김 처리
+})();
+
+const KST_FMT = new Intl.DateTimeFormat("ko-KR", {
+  timeZone: "Asia/Seoul", month: "long", day: "numeric",
+  weekday: "short", hour: "numeric", minute: "2-digit",
+});
+
+/** 지금 신청을 받을 수 있는 상태인가 */
+function isApplyOpen() {
+  const v = String(CONFIG.applyOpensAt || "").trim();
+  if (v === "open") return true;
+  if (!OPEN_AT) return false;          // 값이 없거나 형식 오류 → 잠김
+  return Date.now() >= OPEN_AT.getTime();
+}
+
+/** 잠긴 상태에서 버튼·안내에 쓸 문구 */
+function closedLabel() {
+  return OPEN_AT ? `${KST_FMT.format(OPEN_AT)} 오픈` : "신청 오픈 준비 중";
+}
 
 /* ───────────────────────────────────────────────────────────
    신청 내역 저장소 (Supabase)
@@ -1266,7 +1323,7 @@ $("#clubList").innerHTML = CLUBS.map((c, i) => {
 
     <div class="club-actions">
       <button class="club-apply" type="button" data-apply-club="${esc(c.teller)}">
-        이 클럽 신청하기
+        <span class="lock" aria-hidden="true">🔒</span><span class="txt">이 클럽 신청하기</span>
       </button>
       <button class="club-toggle" type="button" aria-expanded="false" aria-controls="${id}">
         <span class="label">자세히</span>
@@ -1381,12 +1438,59 @@ function closeApply() {
 }
 
 $$("[data-apply-club]").forEach((btn) => {
-  btn.addEventListener("click", () => openApply(btn.dataset.applyClub));
+  btn.addEventListener("click", () => {
+    if (!isApplyOpen()) return;
+    openApply(btn.dataset.applyClub);
+  });
 });
 /* 헤더·히어로·하단 CTA 의 전역 신청 버튼 — 클럽 미선택으로 열기 */
 $$("[data-apply]").forEach((el) => {
-  el.addEventListener("click", (e) => { e.preventDefault(); openApply(null); });
+  el.addEventListener("click", (e) => {
+    e.preventDefault();
+    if (!isApplyOpen()) return;
+    openApply(null);
+  });
 });
+
+/* ── 오픈 전에는 모든 신청 버튼을 잠근다 ─────────────────────
+   오픈 시각이 지정돼 있으면 30초마다 확인해서, 시각이 되는 순간
+   새로고침 없이 버튼이 열립니다.                                */
+function paintApplyState() {
+  const open = isApplyOpen();
+  const label = closedLabel();
+
+  // 카드의 "이 클럽 신청하기"
+  $$("[data-apply-club]").forEach((btn) => {
+    btn.disabled = !open;
+    btn.classList.toggle("is-locked", !open);
+    $(".txt", btn).textContent = open ? "이 클럽 신청하기" : label;
+    btn.setAttribute("aria-label",
+      open ? `${btn.dataset.applyClub} 클럽 신청하기` : `아직 신청할 수 없습니다 — ${label}`);
+  });
+
+  // 헤더·히어로·하단 CTA 의 전역 버튼 (a 태그)
+  $$("[data-apply]").forEach((el) => {
+    el.classList.toggle("is-locked", !open);
+    el.setAttribute("aria-disabled", String(!open));
+    if (!el.dataset.openText) el.dataset.openText = el.textContent.trim();
+    el.textContent = open ? el.dataset.openText : label;
+  });
+
+  // 히어로 상단 배지
+  const badge = $("#openBadge");
+  if (badge) {
+    badge.textContent = open ? "신청 접수 중" : label;
+    badge.classList.toggle("badge-tbd", !open);
+  }
+  return open;
+}
+
+paintApplyState();
+if (!isApplyOpen() && OPEN_AT) {
+  const tick = setInterval(() => {
+    if (paintApplyState()) clearInterval(tick);   // 열리면 감시 종료
+  }, 30_000);
+}
 $$("[data-dlg-close]").forEach((b) => b.addEventListener("click", closeApply));
 
 /* backdrop 클릭으로 닫기 (dialog 자체 영역 = backdrop) */
@@ -1402,10 +1506,8 @@ function syncSecondChoice() {
 }
 
 /* ── 검증 ─────────────────────────────────────────────── */
-const domainOk = (email) => {
-  const m = /^[^@\s]+@([^@\s]+)$/.exec(email.trim());
-  return Boolean(m) && CONFIG.allowedEmailDomains.includes(m[1].toLowerCase());
-};
+/** 이메일 형식만 확인합니다 (도메인 제한 없음). */
+const emailOk = (email) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim());
 
 function setErr(inputId, errId, msg) {
   const input = inputId ? $("#" + inputId) : null;   // 동의 체크처럼 대상 input 이 없는 경우도 있다
@@ -1420,15 +1522,14 @@ function setErr(inputId, errId, msg) {
 }
 
 function validate() {
-  const domains = CONFIG.allowedEmailDomains.map((d) => "@" + d).join(" 또는 ");
   const email = $("#fEmail").value.trim();
 
   const checks = [
     setErr("fClub",  "eClub",  selClub.value ? "" : "희망 클럽을 선택해주세요."),
     setErr("fName",  "eName",  $("#fName").value.trim() ? "" : "이름을 입력해주세요."),
     setErr("fEmail", "eEmail",
-      !email ? "사내 이메일을 입력해주세요."
-      : !domainOk(email) ? `${domains} 주소로만 신청할 수 있어요.`
+      !email ? "이메일을 입력해주세요."
+      : !emailOk(email) ? "이메일 형식을 확인해주세요."
       : ""),
     setErr("fTeam",  "eTeam",  $("#fTeam").value.trim() ? "" : "소속 조직을 입력해주세요."),
     setErr("",       "eAgree",
@@ -1469,6 +1570,10 @@ form.addEventListener("submit", async (e) => {
   // honeypot: 봇이 채운 경우. 조용히 성공 화면만 보여주고 저장하지 않는다.
   if ($("#fWebsite").value.trim()) { showDone({ club: selClub.value }); return; }
 
+  if (!isApplyOpen()) {          // 오픈 전에는 어떤 경로로도 저장하지 않는다
+    showAlert(`아직 신청을 받지 않습니다. ${esc(closedLabel())} 예정입니다.`);
+    return;
+  }
   if (!validate()) {
     $(`[aria-invalid="true"]`, form)?.focus();
     return;
@@ -1510,7 +1615,7 @@ form.addEventListener("submit", async (e) => {
     if (res.status === 409) {
       showAlert("이미 이 클럽에 신청하신 이력이 있어요. 다른 클럽을 선택하시거나 운영진에게 문의해주세요.");
     } else if (res.status === 400 || res.status === 422) {
-      showAlert("입력값을 다시 확인해주세요. 사내 이메일 주소로만 신청할 수 있습니다.");
+      showAlert("입력값을 다시 확인해주세요. 이메일 형식이 올바른지 확인해주세요.");
     } else if (res.status === 401 || res.status === 403) {
       showAlert(`신청 접수 설정에 문제가 있습니다. ${esc(CONTACT)}에게 알려주세요.`);
     } else {

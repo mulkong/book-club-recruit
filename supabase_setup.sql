@@ -9,9 +9,8 @@ create table if not exists public.applications (
 
   name          text not null check (char_length(btrim(name)) between 1 and 40),
 
-  -- 사내 이메일만 허용. 페이지가 공개 URL이라 아무나 열 수 있지만,
-  -- 사내 도메인이 아니면 DB가 거부합니다. 이게 실질적인 외부인 차단선입니다.
-  email         text not null check (email ~* '^[^@[:space:]]+@(navercorp|snowcorp)\.com$'),
+  -- 형식만 검사합니다. 도메인 제한은 두지 않습니다.
+  email         text not null check (email ~ '^[^@[:space:]]+@[^@[:space:]]+\.[^@[:space:]]+$'),
 
   team          text not null check (char_length(btrim(team)) between 1 and 60),
 
