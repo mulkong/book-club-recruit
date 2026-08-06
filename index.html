@@ -947,11 +947,6 @@ section{ padding:clamp(52px, 8vw, 96px) 0; }
         </div>
 
         <div class="field">
-          <label for="fClub2">2순위 클럽 <span class="hint">선택 · 정원 초과 시 참고합니다</span></label>
-          <select id="fClub2" name="club2"></select>
-        </div>
-
-        <div class="field">
           <label for="fName">이름 <span class="req" aria-hidden="true">*</span></label>
           <input type="text" id="fName" name="name" maxlength="40" autocomplete="name"
                  placeholder="홍길동" required>
@@ -1399,16 +1394,12 @@ const dlgAlert  = $("#dlgAlert");
 const submitBtn = $("#dlgSubmit");
 const clubBox   = $("#dlgClub");
 const selClub   = $("#fClub");
-const selClub2  = $("#fClub2");
 
 const READY = Boolean(SUPABASE.url && SUPABASE.key);
 
 /* 클럽 셀렉트 옵션 채우기 — CLUBS 를 그대로 재사용 */
 selClub.innerHTML =
   `<option value="">클럽을 선택해주세요</option>` +
-  CLUBS.map((c) => `<option value="${esc(c.teller)}">${esc(c.teller)} — ${esc(c.tagline)}</option>`).join("");
-selClub2.innerHTML =
-  `<option value="">선택하지 않음</option>` +
   CLUBS.map((c) => `<option value="${esc(c.teller)}">${esc(c.teller)} — ${esc(c.tagline)}</option>`).join("");
 
 $("#dlgFootNote").innerHTML = !READY
@@ -1425,8 +1416,6 @@ function openApply(club) {
     selClub.value = club;
     $("#dlgClubName").textContent = club + " 텔러의 클럽";
     clubBox.hidden = false;
-    // 1순위가 정해졌으면 2순위 목록에서 같은 클럽은 빼둔다
-    syncSecondChoice();
   } else {
     clubBox.hidden = true;
   }
@@ -1561,7 +1550,7 @@ function paintWaitBanner() {
   banner.innerHTML =
     `<strong>${esc(club)} 텔러의 클럽은 정원 ${esc(String(c.capacity))}명이 이미 찼습니다.</strong><br>` +
     `그래도 신청은 받습니다 — <strong>대기자</strong>로 접수되고, 결원이 생기면 ` +
-    `신청 순서대로 충원합니다. 2순위 클럽을 함께 적어두시면 배정에 참고합니다.`;
+    `신청 순서대로 충원합니다.`;
   banner.classList.add("show");
 }
 
@@ -1608,14 +1597,8 @@ $$("[data-dlg-close]").forEach((b) => b.addEventListener("click", closeApply));
 /* backdrop 클릭으로 닫기 (dialog 자체 영역 = backdrop) */
 dlg.addEventListener("click", (e) => { if (e.target === dlg) closeApply(); });
 
-/* 1순위와 2순위가 같아지지 않게 */
-selClub.addEventListener("change", () => { syncSecondChoice(); paintWaitBanner(); });
-function syncSecondChoice() {
-  $$("option", selClub2).forEach((o) => {
-    o.disabled = Boolean(o.value) && o.value === selClub.value;
-  });
-  if (selClub2.value && selClub2.value === selClub.value) selClub2.value = "";
-}
+/* 클럽을 바꾸면 정원 마감 여부에 따라 대기자 배너를 다시 판정한다 */
+selClub.addEventListener("change", paintWaitBanner);
 
 /* ── 검증 ─────────────────────────────────────────────── */
 /** 이메일 형식만 확인합니다 (도메인 제한 없음). */
@@ -1659,7 +1642,6 @@ function resetForm() {
   ["eClub", "eName", "eEmail", "eTeam", "eAgree"].forEach((id) => $("#" + id).classList.remove("show"));
   $$("[aria-invalid]", form).forEach((el) => el.removeAttribute("aria-invalid"));
   setSubmitting(false);
-  syncSecondChoice();
 }
 
 function setSubmitting(on) {
@@ -1756,7 +1738,6 @@ form.addEventListener("submit", async (e) => {
     email:         $("#fEmail").value.trim().toLowerCase(),
     team:          $("#fTeam").value.trim(),
     club:          selClub.value,
-    club2:         selClub2.value || null,
     message:       $("#fMessage").value.trim() || null,
     agree_rules:   true,
     agree_privacy: true,
@@ -1773,7 +1754,6 @@ form.addEventListener("submit", async (e) => {
       p_email:   payload.email,
       p_team:    payload.team,
       p_club:    payload.club,
-      p_club2:   payload.club2,
       p_message: payload.message,
     });
 
@@ -1826,8 +1806,7 @@ function showDone(p, seat) {
   $("#doneDesc").innerHTML = wait
     ? `이 클럽은 정원 ${esc(String(seat.capacity))}명이 이미 찼습니다. ` +
       `<strong>대기 ${esc(String(seat.waitlist_no))}번</strong>으로 등록되었고, ` +
-      `결원이 생기면 순번대로 안내드립니다.` +
-      (p.club2 ? `<br>2순위로 적어주신 ${esc(p.club2)} 텔러의 클럽도 함께 검토합니다.` : "")
+      `결원이 생기면 순번대로 안내드립니다.`
     : `클럽별 멤버가 확정되면 입력하신 이메일로 개별 안내를 드립니다.` +
       (seat ? `<br>현재 정원 ${esc(String(seat.capacity))}명 안에 들어 있습니다.`
             : `<br>정원 초과 시 대기 순번으로 등록됩니다.`);
@@ -1838,7 +1817,6 @@ function showDone(p, seat) {
     ["신청 클럽", p.club ? `${p.club} 텔러` : "-"],
     ["첫 도서",   club ? club.book : "-"],
     ["모임",      club ? `${club.when} · ${club.daysLabel}` : "-"],
-    p.club2 ? ["2순위", `${p.club2} 텔러`] : null,
     seat ? ["신청 순번", wait
       ? `대기 ${seat.waitlist_no}번 (클럽 내 ${seat.seq}번째)`
       : `클럽 내 ${seat.seq}번째 / 정원 ${seat.capacity}명`] : null,
