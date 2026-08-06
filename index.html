@@ -362,6 +362,28 @@ section{ padding:clamp(52px, 8vw, 96px) 0; }
 .club-apply.is-locked:active{ transform:none; }
 .club-apply.is-locked .lock{ display:inline; }
 
+/* ── 정원이 찬 클럽 ────────────────────────────────────────
+   신청 자체는 계속 받습니다(대기자). 잠기는 것과 구분되도록
+   회색이 아니라 '주의' 색으로 두고, 클릭은 그대로 열어둡니다. */
+.club-apply.is-full{
+  background:var(--warn-bg); color:var(--warn-ink);
+  border:1px solid var(--warn-line); box-shadow:none;
+}
+.club-apply.is-full:hover{ background:#FFEFD1; box-shadow:none; }
+
+/* 카드의 정원 표시 — 마감되면 색으로 먼저 눈에 들어오게 */
+.seat-full{ color:var(--warn-ink); font-weight:700; }
+.seat-left{ font-weight:700; }
+
+/* 모달 상단 대기자 안내 배너 */
+.dlg-waitbanner{
+  display:none; margin:0 0 16px; padding:12px 14px; border-radius:10px;
+  background:var(--warn-bg); border:1px solid var(--warn-line);
+  color:var(--warn-ink); font-size:13.5px; line-height:1.6;
+}
+.dlg-waitbanner.show{ display:block; }
+.dlg-waitbanner strong{ font-weight:700; }
+
 /* 헤더·히어로·하단 CTA 의 전역 신청 버튼 */
 .btn.is-locked, .btn-sm.is-locked{
   background:var(--bg-sunken) !important; color:var(--ink-muted) !important;
@@ -909,6 +931,8 @@ section{ padding:clamp(52px, 8vw, 96px) 0; }
           <span aria-hidden="true">⚠️</span><span id="dlgAlertMsg"></span>
         </div>
 
+        <div class="dlg-waitbanner" id="dlgWaitBanner"></div>
+
         <div class="dlg-club" id="dlgClub" hidden>
           <div>
             <p class="dlg-club-label">선택한 클럽</p>
@@ -1070,6 +1094,10 @@ const KST_FMT = new Intl.DateTimeFormat("ko-KR", {
    그대로 동작하며, 실제 접수 허용 여부는 어차피 서버가 다시 판정합니다. */
 let CLOCK_SKEW = 0;
 const nowMs = () => Date.now() + CLOCK_SKEW;
+
+/* 클럽별 실시간 신청 인원. { "신동걸": 2, ... } — null 이면 아직 모름.
+   paintApplyState 가 이 값을 읽으므로 선언이 그보다 앞에 있어야 합니다. */
+let SEATS = null;
 
 /** "before"(오픈 전) | "open"(접수 중) | "closed"(마감) */
 function applyState() {
@@ -1317,7 +1345,8 @@ $("#clubList").innerHTML = CLUBS.map((c, i) => {
       <dl class="club-facts">
         <div class="fact"><dt>모임 시간</dt><dd>${esc(c.when)}<small>${esc(c.daysLabel)}</small></dd></div>
         <div class="fact"><dt>모임 주기</dt><dd>${esc(c.meetCycle)}<small>책 ${esc(c.bookCycle)}</small></dd></div>
-        <div class="fact"><dt>정원</dt><dd>${c.capacity}명</dd></div>
+        <div class="fact"><dt>정원</dt>
+          <dd><span data-seat-of="${esc(c.teller)}">${c.capacity}명</span></dd></div>
         <div class="fact"><dt>장소</dt><dd>${val(c.place)}</dd></div>
       </dl>
     </div>
@@ -1401,6 +1430,9 @@ function openApply(club) {
   } else {
     clubBox.hidden = true;
   }
+  paintWaitBanner();
+  // 모달을 여는 시점의 최신 인원으로 배너를 다시 판정한다
+  refreshStats();
   if (typeof dlg.showModal === "function") {
     dlg.showModal();
   } else {
@@ -1440,11 +1472,19 @@ function paintApplyState() {
 
   // 카드의 "이 클럽 신청하기"
   $$("[data-apply-club]").forEach((btn) => {
+    const club = btn.dataset.applyClub;
+    // 정원이 찼어도 버튼을 잠그지 않습니다 — 대기자 신청을 계속 받기 때문입니다.
+    const full = open && isClubFull(club);
+
     btn.disabled = !open;
     btn.classList.toggle("is-locked", !open);
-    $(".txt", btn).textContent = open ? "이 클럽 신청하기" : label;
-    btn.setAttribute("aria-label",
-      open ? `${btn.dataset.applyClub} 클럽 신청하기` : `아직 신청할 수 없습니다 — ${label}`);
+    btn.classList.toggle("is-full", full);
+    $(".txt", btn).textContent = !open ? label
+      : full ? "대기자로 신청하기" : "이 클럽 신청하기";
+    btn.setAttribute("aria-label", !open
+      ? `아직 신청할 수 없습니다 — ${label}`
+      : full ? `${club} 클럽은 정원이 찼습니다. 대기자로 신청하기`
+             : `${club} 클럽 신청하기`);
   });
 
   // 헤더·히어로·하단 CTA 의 전역 버튼 (a 태그)
@@ -1479,8 +1519,54 @@ paintApplyState();
   setTimeout(watchApplyState, delay);
 })();
 
-/* 서버 시각으로 기기 시계를 한 번 보정한다. 실패해도 조용히 넘어간다. */
-(async function syncServerClock() {
+/* ── 클럽별 실시간 신청 인원 ─────────────────────────────────
+   app_stats() 는 집계만 돌려주는 공개 함수입니다 (이름·이메일 없음).
+   여기서 읽은 값은 화면 표시에만 씁니다. 정원 초과 여부의 최종 판정은
+   apply() 가 저장 시점에 다시 하므로, 이 숫자가 조금 낡아도 순번이
+   틀어지지 않습니다.                                                  */
+/* 선언(let SEATS)은 파일 앞쪽 nowMs 근처에 있습니다.
+   아래 둘은 paintApplyState 에서도 쓰므로 호이스팅되는 function 선언으로 둡니다. */
+function seatsOf(teller) {
+  return SEATS ? (SEATS[teller] || 0) : null;
+}
+function isClubFull(teller) {
+  const n = seatsOf(teller);
+  const c = CLUBS.find((x) => x.teller === teller);
+  return n !== null && c ? n >= c.capacity : false;
+}
+
+/** 카드의 '정원' 표시를 실시간 인원으로 갱신 */
+function paintSeats() {
+  CLUBS.forEach((c) => {
+    const el = $(`[data-seat-of="${c.teller}"]`);
+    if (!el) return;
+    const n = seatsOf(c.teller);
+    if (n === null) { el.textContent = `${c.capacity}명`; return; }
+
+    const left = c.capacity - n;
+    el.className = left <= 0 ? "seat-full" : "seat-left";
+    el.textContent = left <= 0
+      ? `${n} / ${c.capacity}명 · 정원 마감 (대기 접수)`
+      : `${n} / ${c.capacity}명 · ${left}자리 남음`;
+  });
+}
+
+/** 선택한 클럽이 찼으면 모달 상단에 대기자 안내를 띄운다 */
+function paintWaitBanner() {
+  const banner = $("#dlgWaitBanner");
+  const club   = selClub.value;
+  const c      = CLUBS.find((x) => x.teller === club);
+  if (!club || !c || !isClubFull(club)) { banner.classList.remove("show"); return; }
+
+  banner.innerHTML =
+    `<strong>${esc(club)} 텔러의 클럽은 정원 ${esc(String(c.capacity))}명이 이미 찼습니다.</strong><br>` +
+    `그래도 신청은 받습니다 — <strong>대기자</strong>로 접수되고, 결원이 생기면 ` +
+    `신청 순서대로 충원합니다. 2순위 클럽을 함께 적어두시면 배정에 참고합니다.`;
+  banner.classList.add("show");
+}
+
+/** app_stats() 한 번 호출 → 서버 시각 보정 + 클럽별 인원 갱신 */
+async function refreshStats() {
   if (!READY) return;
   try {
     const res = await fetch(`${SUPABASE.url}/rest/v1/rpc/app_stats`, {
@@ -1495,21 +1581,35 @@ paintApplyState();
     });
     if (!res.ok) return;
     const stats = await res.json();
-    if (!stats || !stats.server_time) return;
-    const skew = new Date(stats.server_time).getTime() - Date.now();
-    if (Number.isFinite(skew) && Math.abs(skew) > 3000) {   // 3초 이내 차이는 무시
-      CLOCK_SKEW = skew;
-      paintApplyState();
+    if (!stats) return;
+
+    // 기기 시계 보정 (3초 이내 차이는 무시)
+    if (stats.server_time) {
+      const skew = new Date(stats.server_time).getTime() - Date.now();
+      if (Number.isFinite(skew) && Math.abs(skew) > 3000) CLOCK_SKEW = skew;
     }
-  } catch (err) { /* 네트워크 실패 — 기기 시계로 계속 동작 */ }
-})();
+
+    if (Array.isArray(stats.clubs)) {
+      SEATS = {};
+      stats.clubs.forEach((c) => { SEATS[c.club] = c.applied; });
+    }
+
+    paintSeats();
+    paintApplyState();
+    if (dlg.open) paintWaitBanner();
+  } catch (err) { /* 네트워크 실패 — 정적 정원 표시로 계속 동작 */ }
+}
+
+refreshStats();
+/* 접수 중에는 주기적으로 갱신해서 남은 자리가 실시간으로 줄어들게 한다 */
+setInterval(() => { if (applyState() !== "closed") refreshStats(); }, 30_000);
 $$("[data-dlg-close]").forEach((b) => b.addEventListener("click", closeApply));
 
 /* backdrop 클릭으로 닫기 (dialog 자체 영역 = backdrop) */
 dlg.addEventListener("click", (e) => { if (e.target === dlg) closeApply(); });
 
 /* 1순위와 2순위가 같아지지 않게 */
-selClub.addEventListener("change", syncSecondChoice);
+selClub.addEventListener("change", () => { syncSecondChoice(); paintWaitBanner(); });
 function syncSecondChoice() {
   $$("option", selClub2).forEach((o) => {
     o.disabled = Boolean(o.value) && o.value === selClub.value;
@@ -1555,6 +1655,7 @@ function resetForm() {
   form.hidden = false;
   dlgDone.classList.remove("show");
   dlgAlert.classList.remove("show");
+  $("#dlgWaitBanner").classList.remove("show");
   ["eClub", "eName", "eEmail", "eTeam", "eAgree"].forEach((id) => $("#" + id).classList.remove("show"));
   $$("[aria-invalid]", form).forEach((el) => el.removeAttribute("aria-invalid"));
   setSubmitting(false);
@@ -1743,9 +1844,16 @@ function showDone(p, seat) {
       : `클럽 내 ${seat.seq}번째 / 정원 ${seat.capacity}명`] : null,
   ].filter(Boolean).map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join("");
   dlgAlert.classList.remove("show");   // 직전 시도의 오류 배너가 남아있지 않게
+  $("#dlgWaitBanner").classList.remove("show");
   form.hidden = true;
   dlgDone.classList.add("show");
   $(".dlg-body").scrollTop = 0;
+
+  /* 방금 늘어난 인원을 카드에 바로 반영하고(낙관적), 이어서 서버 값으로 맞춘다 */
+  if (seat && !seat.already && p.club && SEATS) SEATS[p.club] = (SEATS[p.club] || 0) + 1;
+  paintSeats();
+  paintApplyState();
+  refreshStats();
 }
 
 /* ── 조율 중 항목 ──────────────────────────────────────── */
