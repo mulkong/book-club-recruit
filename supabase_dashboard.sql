@@ -22,11 +22,17 @@ create table if not exists private.settings (
 );
 revoke all on private.settings from anon, authenticated;
 
--- ▼▼▼ 운영진 코드. 원하는 값으로 바꾸세요 ▼▼▼
-insert into private.settings (key, value) values ('admin_code', 'bookclub4')
-  on conflict (key) do update set value = excluded.value;
--- 나중에 바꿀 때:
---   update private.settings set value = '새코드' where key = 'admin_code';
+-- ▼▼▼ 운영진 코드 ▼▼▼
+-- 이 레포는 공개되어 있습니다. 코드를 여기 적으면 안 됩니다.
+-- app_list() 는 anon 에게 EXECUTE 가 부여돼 있고 anon 키는 페이지에 노출되므로,
+-- 이 코드가 유일한 방어선입니다. 코드가 공개되면 전체 신청자의 이름·이메일·
+-- 소속·메시지를 누구나 조회할 수 있습니다.
+--
+-- 아래 한 줄을 SQL Editor 에서만 실행하세요 (레포에 커밋하지 말 것):
+--   insert into private.settings (key, value) values ('admin_code', '<실제코드>')
+--     on conflict (key) do update set value = excluded.value;
+--
+-- 코드는 20자 이상 무작위 문자열을 쓰세요. 추측 가능한 단어는 쓰지 마세요.
 
 
 -- ── 3. 집계 통계 (코드 불필요, 개인정보 없음) ────────────────────
@@ -134,5 +140,5 @@ grant execute on function public.app_list(text) to anon;
 
 -- ── 5. 확인 ──────────────────────────────────────────────────────
 -- select public.app_stats();
--- select public.app_list('bookclub4');
+-- select public.app_list('<실제코드>');
 -- select public.app_list('틀린코드');   -- 42501 예외가 나야 정상
