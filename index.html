@@ -995,9 +995,9 @@ section{ padding:clamp(52px, 8vw, 96px) 0; }
     </form>
 
     <div class="dlg-done" id="dlgDone">
-      <div class="done-mark" aria-hidden="true">✓</div>
-      <h3>신청이 접수되었습니다</h3>
-      <p>클럽별 멤버가 확정되면 입력하신 이메일로 개별 안내를 드립니다.<br>정원 초과 시 대기 순번으로 등록됩니다.</p>
+      <div class="done-mark" id="doneMark" aria-hidden="true">✓</div>
+      <h3 id="doneTitle">신청이 접수되었습니다</h3>
+      <p id="doneDesc">클럽별 멤버가 확정되면 입력하신 이메일로 개별 안내를 드립니다.<br>정원 초과 시 대기 순번으로 등록됩니다.</p>
       <dl class="done-card" id="doneSummary"></dl>
       <div class="dlg-foot" style="background:none;border:0;padding:26px 0 0">
         <button class="btn btn-ghost" type="button" data-dlg-close style="width:100%">닫기</button>
@@ -1064,13 +1064,27 @@ const KST_FMT = new Intl.DateTimeFormat("ko-KR", {
   weekday: "short", hour: "numeric", minute: "2-digit",
 });
 
+/* 서버 시각 보정치 (서버시각 - 기기시각, ms).
+   기기 시계가 몇 분 틀어져 있어도 버튼이 정각에 열리도록, 페이지를 열 때
+   app_stats() 의 server_time 으로 한 번 맞춥니다. 보정에 실패해도 기기 시계로
+   그대로 동작하며, 실제 접수 허용 여부는 어차피 서버가 다시 판정합니다. */
+let CLOCK_SKEW = 0;
+const nowMs = () => Date.now() + CLOCK_SKEW;
+
 /** "before"(오픈 전) | "open"(접수 중) | "closed"(마감) */
 function applyState() {
-  const now = Date.now();
+  const now = nowMs();
   if (CLOSE_AT && now >= CLOSE_AT.getTime()) return "closed";
   if (String(CONFIG.applyOpensAt || "").trim() === "open") return "open";
   if (!OPEN_AT) return "before";                 // 값이 없거나 형식 오류 → 잠김
   return now >= OPEN_AT.getTime() ? "open" : "before";
+}
+/** 다음 상태 전환(오픈 또는 마감)까지 남은 ms. 없으면 Infinity */
+function msToNextTransition() {
+  const now = nowMs();
+  return [OPEN_AT, CLOSE_AT]
+    .filter((d) => d && d.getTime() > now)
+    .reduce((m, d) => Math.min(m, d.getTime() - now), Infinity);
 }
 const isApplyOpen = () => applyState() === "open";
 
@@ -1451,13 +1465,44 @@ function paintApplyState() {
 }
 
 paintApplyState();
+
 /* 마감 상태가 아니라면 계속 지켜본다. 오픈 시각과 마감 시각 두 번 다 반응해야
-   하므로, 열렸다고 멈추지 않고 '마감' 이 될 때까지 확인합니다. */
-if (applyState() !== "closed") {
-  const tick = setInterval(() => {
-    if (paintApplyState() === "closed") clearInterval(tick);
-  }, 30_000);
-}
+   하므로, 열렸다고 멈추지 않고 '마감' 이 될 때까지 확인합니다.
+
+   고정 30초 주기로 확인하면 10:00:00 에 열려야 할 버튼이 최대 30초 늦게 열리고,
+   그동안 사람들이 새로고침을 반복합니다. 다음 전환 시각까지 남은 만큼만 자고
+   일어나도록 해서 정각에 바로 반응하게 합니다. */
+(function watchApplyState() {
+  if (paintApplyState() === "closed") return;
+  const next  = msToNextTransition();
+  const delay = next === Infinity ? 30_000 : Math.max(200, Math.min(30_000, next));
+  setTimeout(watchApplyState, delay);
+})();
+
+/* 서버 시각으로 기기 시계를 한 번 보정한다. 실패해도 조용히 넘어간다. */
+(async function syncServerClock() {
+  if (!READY) return;
+  try {
+    const res = await fetch(`${SUPABASE.url}/rest/v1/rpc/app_stats`, {
+      method: "POST",
+      headers: {
+        apikey: SUPABASE.key,
+        Authorization: `Bearer ${SUPABASE.key}`,
+        "Content-Type": "application/json",
+      },
+      body: "{}",
+      signal: reqSignal(6000),
+    });
+    if (!res.ok) return;
+    const stats = await res.json();
+    if (!stats || !stats.server_time) return;
+    const skew = new Date(stats.server_time).getTime() - Date.now();
+    if (Number.isFinite(skew) && Math.abs(skew) > 3000) {   // 3초 이내 차이는 무시
+      CLOCK_SKEW = skew;
+      paintApplyState();
+    }
+  } catch (err) { /* 네트워크 실패 — 기기 시계로 계속 동작 */ }
+})();
 $$("[data-dlg-close]").forEach((b) => b.addEventListener("click", closeApply));
 
 /* backdrop 클릭으로 닫기 (dialog 자체 영역 = backdrop) */
@@ -1529,13 +1574,66 @@ function showAlert(msg) {
   $(".dlg-body").scrollTop = 0;
 }
 
+/* ── 전송 유틸 ─────────────────────────────────────────
+   타임아웃과 1회 자동 재시도. 오픈 정각에 요청이 몰려 응답이 늦어지거나
+   429/5xx 가 돌아올 때, "전송 중…" 에서 무한히 기다리거나 사용자가 직접
+   다시 누르지 않아도 되게 합니다.                                     */
+const REQ_TIMEOUT_MS = 15_000;
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+/* AbortSignal.timeout 은 Safari 16 / Chrome 103 이상입니다. 없으면 타임아웃 없이
+   보냅니다 (기존과 같은 동작). 구형 브라우저에서 터지지 않게 감싸둡니다. */
+function reqSignal(ms) {
+  try {
+    return typeof AbortSignal !== "undefined" && AbortSignal.timeout
+      ? AbortSignal.timeout(ms) : undefined;
+  } catch (err) { return undefined; }
+}
+
+async function postSupabase(path, body, extraHeaders) {
+  const send = () => fetch(`${SUPABASE.url}${path}`, {
+    method: "POST",
+    headers: Object.assign({
+      apikey: SUPABASE.key,
+      // 신형 publishable key 는 Authorization 헤더 사용이 제한되지만,
+      // apikey 와 값이 완전히 같을 때는 허용됩니다. (구형 JWT anon key 와도 호환)
+      Authorization: `Bearer ${SUPABASE.key}`,
+      "Content-Type": "application/json",
+    }, extraHeaders),
+    body: JSON.stringify(body),
+    signal: reqSignal(REQ_TIMEOUT_MS),
+  });
+
+  let res = await send();
+  // 일시적 실패(과부하·레이트리밋)만 한 번 더. 4xx 는 다시 보내도 결과가 같습니다.
+  // 첫 요청이 이미 저장된 뒤 실패한 경우에도 apply() 가 기존 순번을 돌려주므로
+  // 재시도가 중복 신청이나 중복 오류로 이어지지 않습니다.
+  if (res.status === 429 || res.status >= 500) {
+    await sleep(600 + Math.floor(Math.random() * 600));   // 재시도가 다시 겹치지 않게 분산
+    res = await send();
+  }
+  return res;
+}
+
+function showHttpError(status) {
+  if (status === 409) {
+    showAlert("이미 이 클럽에 신청하신 이력이 있어요. 다른 클럽을 선택하시거나 운영진에게 문의해주세요.");
+  } else if (status === 400 || status === 422) {
+    showAlert("입력값을 다시 확인해주세요. 이메일 형식이 올바른지 확인해주세요.");
+  } else if (status === 401 || status === 403) {
+    showAlert(`신청 접수 설정에 문제가 있습니다. ${esc(CONTACT)}에게 알려주세요.`);
+  } else {
+    showAlert(`전송에 실패했습니다 (오류 ${status}). 잠시 후 다시 시도하시거나 운영진에게 문의해주세요.`);
+  }
+}
+
 /* ── 제출 ─────────────────────────────────────────────── */
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
   dlgAlert.classList.remove("show");
 
   // honeypot: 봇이 채운 경우. 조용히 성공 화면만 보여주고 저장하지 않는다.
-  if ($("#fWebsite").value.trim()) { showDone({ club: selClub.value }); return; }
+  if ($("#fWebsite").value.trim()) { showDone({ club: selClub.value }, null); return; }
 
   if (!isApplyOpen()) {          // 오픈 전·마감 후에는 어떤 경로로도 저장하지 않는다
     showAlert(applyState() === "closed"
@@ -1565,45 +1663,84 @@ form.addEventListener("submit", async (e) => {
 
   setSubmitting(true);
   try {
-    const res = await fetch(`${SUPABASE.url}/rest/v1/${SUPABASE.table}`, {
-      method: "POST",
-      headers: {
-        apikey: SUPABASE.key,
-        // 신형 publishable key 는 Authorization 헤더 사용이 제한되지만,
-        // apikey 와 값이 완전히 같을 때는 허용됩니다. (구형 JWT anon key 와도 호환)
-        Authorization: `Bearer ${SUPABASE.key}`,
-        "Content-Type": "application/json",
-        // 기본값은 삽입한 행을 돌려주려 하는데, anon 에게 SELECT 권한이 없으므로 반드시 minimal
-        Prefer: "return=minimal",
-      },
-      body: JSON.stringify(payload),
+    /* apply() 가 접수 창 검증 · INSERT · 순번 계산을 한 트랜잭션에서 처리합니다.
+       덕분에 동시에 몰려도 순번이 겹치지 않고, 기기 시계를 조작하거나 콘솔로
+       모달을 강제로 열어도 접수 창을 벗어난 제출은 서버가 거부합니다.
+       정의는 supabase_waitlist.sql 참고.                                */
+    const res = await postSupabase("/rest/v1/rpc/apply", {
+      p_name:    payload.name,
+      p_email:   payload.email,
+      p_team:    payload.team,
+      p_club:    payload.club,
+      p_club2:   payload.club2,
+      p_message: payload.message,
     });
 
-    if (res.ok) { showDone(payload); return; }
+    /* apply() 가 아직 DB 에 없는 경우(마이그레이션 전) — 신청을 잃지 않도록
+       기존 직접 INSERT 경로로 저장합니다. 이때는 순번이 표시되지 않습니다. */
+    if (res.status === 404) {
+      const legacy = await postSupabase(`/rest/v1/${SUPABASE.table}`, payload,
+                                        { Prefer: "return=minimal" });
+      if (legacy.ok) { showDone(payload, null); return; }
+      showHttpError(legacy.status);
+      return;
+    }
 
-    if (res.status === 409) {
-      showAlert("이미 이 클럽에 신청하신 이력이 있어요. 다른 클럽을 선택하시거나 운영진에게 문의해주세요.");
-    } else if (res.status === 400 || res.status === 422) {
-      showAlert("입력값을 다시 확인해주세요. 이메일 형식이 올바른지 확인해주세요.");
-    } else if (res.status === 401 || res.status === 403) {
-      showAlert(`신청 접수 설정에 문제가 있습니다. ${esc(CONTACT)}에게 알려주세요.`);
-    } else {
-      showAlert(`전송에 실패했습니다 (오류 ${res.status}). 잠시 후 다시 시도하시거나 운영진에게 문의해주세요.`);
+    if (!res.ok) { showHttpError(res.status); return; }
+
+    const out = await res.json();
+    if (out && out.ok) { showDone(payload, out); return; }
+
+    switch (out && out.code) {
+      case "not_open":
+        showAlert(`아직 신청을 받지 않습니다. ${esc(closedLabel())} 예정입니다.`);
+        break;
+      case "closed":
+        showAlert("신청이 마감되었습니다. 문의는 " + esc(CONTACT) + "에게 해주세요.");
+        break;
+      default:
+        showAlert("입력값을 다시 확인해주세요. 이메일 형식이 올바른지 확인해주세요.");
     }
   } catch (err) {
-    showAlert("네트워크 연결을 확인한 뒤 다시 시도해주세요.");
+    showAlert(err && err.name === "TimeoutError"
+      ? "응답이 늦어 전송을 중단했습니다. 잠시 후 다시 시도해주세요. (중복 저장되지 않습니다)"
+      : "네트워크 연결을 확인한 뒤 다시 시도해주세요.");
   } finally {
     setSubmitting(false);
   }
 });
 
-function showDone(p) {
+/** p = 제출한 값, seat = apply() 응답 (마이그레이션 전이면 null) */
+function showDone(p, seat) {
   const club = CLUBS.find((c) => c.teller === p.club);
+  const wait = seat && seat.status === "waitlist";
+
+  /* 제목·설명을 확정/대기 여부에 맞춰 바꾼다 */
+  $("#doneTitle").textContent = !seat
+    ? "신청이 접수되었습니다"
+    : seat.already
+      ? "이미 접수된 신청입니다"
+      : wait ? "대기자로 접수되었습니다" : "신청이 접수되었습니다";
+
+  $("#doneDesc").innerHTML = wait
+    ? `이 클럽은 정원 ${esc(String(seat.capacity))}명이 이미 찼습니다. ` +
+      `<strong>대기 ${esc(String(seat.waitlist_no))}번</strong>으로 등록되었고, ` +
+      `결원이 생기면 순번대로 안내드립니다.` +
+      (p.club2 ? `<br>2순위로 적어주신 ${esc(p.club2)} 텔러의 클럽도 함께 검토합니다.` : "")
+    : `클럽별 멤버가 확정되면 입력하신 이메일로 개별 안내를 드립니다.` +
+      (seat ? `<br>현재 정원 ${esc(String(seat.capacity))}명 안에 들어 있습니다.`
+            : `<br>정원 초과 시 대기 순번으로 등록됩니다.`);
+
+  $("#doneMark").textContent = wait ? "🕑" : "✓";
+
   $("#doneSummary").innerHTML = [
     ["신청 클럽", p.club ? `${p.club} 텔러` : "-"],
     ["첫 도서",   club ? club.book : "-"],
     ["모임",      club ? `${club.when} · ${club.daysLabel}` : "-"],
     p.club2 ? ["2순위", `${p.club2} 텔러`] : null,
+    seat ? ["신청 순번", wait
+      ? `대기 ${seat.waitlist_no}번 (클럽 내 ${seat.seq}번째)`
+      : `클럽 내 ${seat.seq}번째 / 정원 ${seat.capacity}명`] : null,
   ].filter(Boolean).map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join("");
   dlgAlert.classList.remove("show");   // 직전 시도의 오류 배너가 남아있지 않게
   form.hidden = true;
